@@ -18,7 +18,7 @@ export const onboardInput = z.object({
   concept: z.string().trim().max(500).optional(),
   startingPoint: z.enum(STARTING_POINTS),
   targetOpeningDate: z.string().refine(isLocalDate, "Pick a date.").nullable().optional(),
-  totalBudgetCents: z.number().int().min(0).nullable().optional(),
+  totalBudgetCents: z.number({ error: "Enter an amount in pesos, like 2,500,000 or 2.5m." }).int().min(0).nullable().optional(),
   contingencyBp: z.number().int().min(0).max(5000).default(1200),
 });
 

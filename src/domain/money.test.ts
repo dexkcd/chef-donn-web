@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBp, formatPeso, formatPesoCompact, mulBp, parsePeso, ratioBp, roundToHundredPesos } from "./money";
+import { formatBp, formatPeso, formatPesoCompact, mulBp, parsePeso, parsePesoInput, ratioBp, roundToHundredPesos } from "./money";
 
 describe("parsePeso", () => {
   it.each([
@@ -17,6 +17,30 @@ describe("parsePeso", () => {
 
   it.each(["", "abc", "1,23.00", "1.234", "-5", "12,34", "₱", "."])("rejects %s", (input) => {
     expect(parsePeso(input)).toBeNull();
+  });
+});
+
+describe("parsePesoInput", () => {
+  it.each([
+    ["2.5m", 250000000],
+    ["2.5M", 250000000],
+    ["2.5 million", 250000000],
+    ["₱3m", 300000000],
+    ["800k", 80000000],
+    ["2,500k", 250000000],
+    ["1.234567m", 123456700],
+    ["3 000 000", 300000000],
+    ["3 000 000.50", 300000050],
+    ["₱3,000,000", 300000000],
+    ["2,500,000.50", 250000050],
+    ["1,234.50", 123450],
+    ["PHP 80", 8000],
+  ])("parses %s", (input, cents) => {
+    expect(parsePesoInput(input)).toBe(cents);
+  });
+
+  it.each(["", "abc", "2,5m", "3.000.000", "3 5", "30 00", "m", "1.2345678k", "-2m", "12,34"])("rejects %s", (input) => {
+    expect(parsePesoInput(input)).toBeNull();
   });
 });
 

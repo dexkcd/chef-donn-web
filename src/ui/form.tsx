@@ -4,7 +4,7 @@
  * Forms post to Server Actions and show the server's reason when something is refused —
  * the same "rejections are surfaced, never silent" rule as the Android hub.
  */
-import { createContext, use, useActionState, useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { createContext, startTransition, use, useActionState, useEffect, useRef, type ComponentProps, type FormEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, cx, Notice, type ButtonVariant } from "./kit";
 
@@ -14,6 +14,8 @@ export interface FormState {
   message?: string;
   fieldErrors?: Record<string, string>;
   at?: number;
+  /** Set by ActionForm while the action runs (not part of what the server returns). */
+  pending?: boolean;
 }
 
 const FormCtx = createContext<FormState>({});
@@ -31,14 +33,21 @@ export function ActionForm({
   resetOnSuccess?: boolean;
   id?: string;
 }) {
-  const [state, formAction] = useActionState(action, {});
+  const [state, formAction, pending] = useActionState(action, {});
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state.ok && resetOnSuccess) ref.current?.reset();
   }, [state, resetOnSuccess]);
+  // Dispatch by hand rather than <form action>: React resets a form after every form action,
+  // refusals included, which wiped what the person typed and showed the old value instead.
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+    startTransition(() => formAction(data));
+  };
   return (
-    <FormCtx value={state}>
-      <form ref={ref} id={id} action={formAction} className={cx("flex flex-col gap-4", className)} noValidate>
+    <FormCtx value={{ ...state, pending }}>
+      <form ref={ref} id={id} onSubmit={onSubmit} className={cx("flex flex-col gap-4", className)} noValidate>
         {state.reason && !state.ok && <Notice tone="danger" title={state.reason} />}
         {state.ok && state.message && <Notice tone="success" title={state.message} />}
         {children}
@@ -52,7 +61,8 @@ export function useFieldError(name: string): string | undefined {
 }
 
 export function Submit({ children, variant = "primary", block = true, pendingLabel = "Saving…" }: { children: ReactNode; variant?: ButtonVariant; block?: boolean; pendingLabel?: string }) {
-  const { pending } = useFormStatus();
+  const status = useFormStatus();
+  const pending = status.pending || !!use(FormCtx).pending;
   return (
     <Button type="submit" variant={variant} block={block} disabled={pending} aria-busy={pending}>
       {pending ? pendingLabel : children}
@@ -89,7 +99,7 @@ export function TextField({ name, label, hint, className, ...rest }: ComponentPr
   );
 }
 
-/** Pesos typed as "12,500" or "12500.50"; parsed to centavos on the server. */
+/** Pesos typed as "12,500", "12500.50", "2.5m" or "800k"; parsed to centavos on the server. */
 export function MoneyField({ name, label, hint, defaultCents, ...rest }: Omit<ComponentProps<"input">, "defaultValue"> & { name: string; label: string; hint?: ReactNode; defaultCents?: number | null }) {
   const error = useFieldError(name);
   const dv = defaultCents === null || defaultCents === undefined ? "" : (defaultCents / 100).toFixed(2).replace(/\.00$/, "");

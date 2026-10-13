@@ -6,6 +6,7 @@ import { onboardAction } from "@/server/actions/roadmap";
 import { loadProfile } from "@/server/services/budget-data";
 import { requireMember } from "@/server/viewer";
 import { ActionForm, ChoiceCards, MoneyField, Submit, TextArea, TextField } from "@/ui/form";
+import { TOTAL_HINT } from "@/ui/hints";
 
 export const metadata: Metadata = { title: "Set up" };
 
@@ -22,6 +23,7 @@ export default async function OnboardingPage() {
   const role = v.principal.actor.role;
   if (role !== "owner" && role !== "partner") redirect("/");
   const profile = await loadProfile(db, v.principal.workspaceId);
+  if (profile.onboardedAt) redirect("/settings/profile");
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-8">
@@ -41,7 +43,7 @@ export default async function OnboardingPage() {
           />
         </div>
         <TextField name="targetOpeningDate" label="Target opening date" type="date" defaultValue={profile.targetOpeningDate ?? ""} hint="A rough date is fine — it drives the runway." />
-        <MoneyField name="totalBudget" label="Total you can spend to open" defaultCents={profile.totalBudgetCents} placeholder="2,500,000" hint="Everything before opening day, including the working-capital reserve." />
+        <MoneyField name="totalBudget" label="Total you can spend to open" defaultCents={profile.totalBudgetCents} hint={TOTAL_HINT} />
         <TextField name="contingencyPct" label="Contingency %" type="number" inputMode="numeric" min={0} max={50} defaultValue={profile.contingencyBp / 100} hint="Overruns come out of this, visibly. 10–15% is common." />
         <TextArea name="concept" label="Concept (optional)" defaultValue={profile.concept ?? ""} placeholder="Grilled seafood and Filipino comfort food for divers and backpackers" />
         <Submit pendingLabel="Building your roadmap…">Build my roadmap</Submit>

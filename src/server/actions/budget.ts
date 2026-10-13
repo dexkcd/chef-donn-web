@@ -149,5 +149,5 @@ export async function updateProfileAction(_prev: FormState, fd: FormData): Promi
     },
     updateProfile,
   );
-  return toFormState(r, "Profile saved.");
+  return toFormState(r, "Profile saved.", { contingencyBp: "contingencyPct" });
 }

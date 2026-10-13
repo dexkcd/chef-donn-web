@@ -4,7 +4,8 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { receipt } from "@/db/schema";
 import { formatDate, manilaToday } from "@/domain/dates";
-import { formatBp, formatPeso } from "@/domain/money";
+import { formatBp, formatPeso, ratioBp } from "@/domain/money";
+import { can } from "@/domain/permissions";
 import { nextUp } from "@/domain/roadmap";
 import { budgetOverview } from "@/server/services/budget-data";
 import { loadRoadmap } from "@/server/services/roadmap";
@@ -33,6 +34,9 @@ export default async function OverviewPage() {
   const scaleMax = Math.max(1, ...normal.map((c) => Math.max(c.planned, c.forecast)));
   const due = [...o.upcoming14.overdue, ...o.upcoming14.due];
   const canWrite = v.principal.actor.role !== "bookkeeper";
+  const canEditProfile = can(v.principal.actor.role, "profile.edit");
+  const totalBudget = o.profile.totalBudgetCents;
+  const planShare = totalBudget ? ratioBp(totals.planned, totalBudget) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -89,6 +93,32 @@ export default async function OverviewPage() {
           </Card>
         ))}
       </div>
+      <Card className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 !py-3">
+        {totalBudget !== null ? (
+          <>
+            <div>
+              <div className="label text-[13px] text-muted">Total you can spend</div>
+              <div className="num text-[20px] font-semibold">{formatPeso(totalBudget, { noCentavos: true })}</div>
+            </div>
+            {planShare !== null && (
+              <div className="text-[15px] text-muted">
+                plan uses <span className="num">{formatBp(Math.round(planShare / 100) * 100)}</span>
+              </div>
+            )}
+            {canEditProfile && (
+              <Link href="/settings/profile" className="label flex min-h-[56px] items-center px-2 text-[14px] text-green underline">
+                Edit
+              </Link>
+            )}
+          </>
+        ) : canEditProfile ? (
+          <Link href="/settings/profile" className="flex min-h-[56px] items-center font-semibold text-green underline">
+            Set the most you can spend →
+          </Link>
+        ) : (
+          <span className="text-muted">No total budget set yet.</span>
+        )}
+      </Card>
       {o.profile.totalBudgetCents !== null && totals.planned > o.profile.totalBudgetCents && (
         <Notice tone="warning" title={`The plan is ${formatPeso(totals.planned - o.profile.totalBudgetCents, { noCentavos: true })} over your total budget`}>
           You set {formatPeso(o.profile.totalBudgetCents, { noCentavos: true })} as the most you can spend. Trim estimates or add funding.

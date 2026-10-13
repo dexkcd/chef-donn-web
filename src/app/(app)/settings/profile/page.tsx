@@ -7,6 +7,7 @@ import { updateProfileAction } from "@/server/actions/budget";
 import { loadProfile } from "@/server/services/budget-data";
 import { requireMember } from "@/server/viewer";
 import { ActionForm, MoneyField, SelectField, Submit, TextArea, TextField } from "@/ui/form";
+import { TOTAL_HINT } from "@/ui/hints";
 import { PageHeader } from "@/ui/kit";
 
 export const metadata: Metadata = { title: "Restaurant profile" };
@@ -28,7 +29,7 @@ export default async function ProfilePage() {
           ))}
         </SelectField>
         <TextField name="targetOpeningDate" label="Target opening date" type="date" defaultValue={p.targetOpeningDate ?? ""} />
-        <MoneyField name="totalBudget" label="Total you can spend to open" defaultCents={p.totalBudgetCents} />
+        <MoneyField name="totalBudget" label="Total you can spend to open" defaultCents={p.totalBudgetCents} hint={TOTAL_HINT} />
         <TextField name="contingencyPct" label="Contingency %" type="number" inputMode="numeric" min={0} max={50} defaultValue={p.contingencyBp / 100} hint="Of everything planned (working-capital reserve excluded)." />
         <TextField name="seats" label="Seats (optional)" type="number" inputMode="numeric" min={0} defaultValue={p.seats ?? ""} />
         <TextArea name="concept" label="Concept" defaultValue={p.concept ?? ""} />

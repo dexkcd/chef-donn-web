@@ -37,13 +37,18 @@ export function CaptureForm({ stayOnPage = false }: { stayOnPage?: boolean }) {
           label: `Receipt photo${note.trim() ? ` · ${note.trim()}` : ""}`,
         });
       }
-      void drainOutbox();
+      const sending = drainOutbox();
       // Offline, a navigation would wait for signal; stay here and show what's queued instead.
       if (stayOnPage || offline || !navigator.onLine) {
         setBusy(false);
         setNote("");
         setQueued((n) => n + files.length);
-      } else router.push("/receipts");
+      } else {
+        // Let the upload land first so the list shows it; on slow signal stop waiting after
+        // 10s — the outbox keeps sending and the list picks it up when it arrives.
+        await Promise.race([sending, new Promise((r) => setTimeout(r, 10_000))]);
+        router.push("/receipts");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't add that photo.");
       setBusy(false);

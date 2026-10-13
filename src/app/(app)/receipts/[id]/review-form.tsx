@@ -81,7 +81,7 @@ export function ReviewForm({
 
   const row = (k: FieldKey, label: string, input: React.ReactNode, opts: { required?: boolean } = {}) => {
     const f = fields[k];
-    const err = state.fieldErrors?.[k === "total" ? "totalCents" : k];
+    const err = state.fieldErrors?.[k];
     return (
       <div className={cx("rounded-md border-[1.5px] p-3", f.confirmed ? "border-green bg-[#f1f8f4]" : "border-line bg-surface", err && "border-red border-[3px]")}>
         <div className="mb-1 flex items-center justify-between gap-2">

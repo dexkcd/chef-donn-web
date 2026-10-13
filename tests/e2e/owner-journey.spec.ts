@@ -42,6 +42,25 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await expect(page.getByText(/Port Barton, San Vicente, Palawan/).first()).toBeVisible();
   const plannedBefore = await page.locator("section").filter({ hasText: "○Planned" }).first().innerText();
 
+  // The total shows on the Overview; editing it keeps what was typed when it's refused,
+  // and takes the way people write budgets ("3m").
+  const totalCard = page.locator("section").filter({ hasText: "Total you can spend" });
+  await expect(totalCard).toContainText("₱3,500,000");
+  await page.goto("/onboarding");
+  await expect(page).toHaveURL(/\/settings\/profile$/);
+  const total = page.getByLabel("Total you can spend to open");
+  await expect(total).toHaveValue("3500000");
+  await total.fill("abc");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.locator("#f-totalBudget-err")).toContainText("2,500,000 or 2.5m");
+  await expect(total).toHaveValue("abc");
+  await total.fill("3m");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.getByText("Profile saved.")).toBeVisible();
+  await expect(page.locator("#f-totalBudget-err")).toHaveCount(0);
+  await page.goto("/");
+  await expect(totalCard).toContainText("₱3,000,000");
+
   // Roadmap: building → permits are blocked in the right order.
   await page.getByRole("link", { name: "Roadmap" }).last().click();
   const mayors = page.getByRole("link", { name: /^Mayor.s \/ business permit/ });

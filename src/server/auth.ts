@@ -16,6 +16,9 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: { user, session, account, verification } }),
   emailAndPassword: { enabled: false },
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
+  // Railway's edge puts the client address in X-Real-IP; without it every sign-in shares one
+  // rate-limit bucket.
+  advanced: { ipAddress: { ipAddressHeaders: ["x-real-ip", "x-forwarded-for"] } },
   plugins: [
     magicLink({
       expiresIn: 15 * 60,

@@ -64,6 +64,33 @@ export function parsePeso(input: string): Cents | null {
   return Number.isSafeInteger(cents) ? cents : null;
 }
 
+const SUFFIX_PESOS: Record<string, bigint> = { k: BigInt(1_000), m: BigInt(1_000_000), mil: BigInt(1_000_000), million: BigInt(1_000_000) };
+const SUFFIXED = /^(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?\s*(k|m|mil|million)$/i;
+const SPACE_GROUPED = /^\d{1,3}(?: \d{3})+(?:\.\d{0,2})?$/;
+
+/**
+ * What a person types into an amount field: everything parsePeso takes, plus "2.5m", "800k",
+ * "2.5 million" and space-grouped thousands ("3 000 000"). Still exact — the suffix maths is
+ * integer, and anything that isn't whole centavos or could be read two ways ("2,5m",
+ * "3.000.000") is null. AI output keeps going through the stricter parsePeso.
+ */
+export function parsePesoInput(input: string): Cents | null {
+  const s = input
+    .replace(/[   ]/g, " ")
+    .trim()
+    .replace(/^(₱|php|p)\s*/i, "");
+  const suffixed = SUFFIXED.exec(s);
+  if (suffixed) {
+    const [, whole = "", frac = "", suffix = ""] = suffixed;
+    const scale = BigInt(10) ** BigInt(frac.length);
+    const exact = (BigInt(whole.replace(/,/g, "")) * scale + BigInt(frac || "0")) * SUFFIX_PESOS[suffix.toLowerCase()]! * BigInt(PESO);
+    if (exact % scale !== BigInt(0)) return null;
+    const cents = Number(exact / scale);
+    return Number.isSafeInteger(cents) ? cents : null;
+  }
+  return parsePeso(SPACE_GROUPED.test(s) ? s.replace(/ /g, "") : s);
+}
+
 function groupThousands(n: bigint): string {
   const s = n.toString();
   return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");

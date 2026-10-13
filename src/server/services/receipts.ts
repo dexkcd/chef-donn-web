@@ -68,7 +68,7 @@ export async function captureReceipt(ctx: ServiceCtx, input: z.output<typeof cap
 }
 
 // ── confirm ───────────────────────────────────────────────────────────────────────────────
-const cents = z.number({ error: "Enter an amount in pesos." }).int().min(0);
+const cents = z.number({ error: "Enter an amount in pesos, like 1,250 or 1,250.50." }).int().min(0);
 export const confirmInput = z
   .object({
     receiptId: z.uuid(),

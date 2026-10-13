@@ -1,6 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { redirect, RedirectType } from "next/navigation";
 import type { FormState } from "@/ui/form";
 import { onboard, onboardInput, setTaskEstimate, setTaskStatus, taskEstimateInput, taskStatusInput } from "../services/roadmap";
 import { act } from "../viewer";
@@ -21,8 +22,11 @@ export async function onboardAction(_prev: FormState, fd: FormData): Promise<For
     },
     onboard,
   );
-  if (!r.ok) return toFormState(r);
-  redirect("/");
+  if (!r.ok) return toFormState(r, undefined, { contingencyBp: "contingencyPct" });
+  // Replace, so Back doesn't land on a stale copy of this form (resubmitting it would put the
+  // old figures back). Later edits happen in Settings → Restaurant profile.
+  revalidatePath("/", "layout");
+  redirect("/", RedirectType.replace);
 }
 
 export async function setTaskStatusAction(_prev: FormState, fd: FormData): Promise<FormState> {

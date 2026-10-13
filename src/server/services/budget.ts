@@ -10,7 +10,7 @@ import { loadBudgetInputs } from "./budget-data";
 
 // ── input schemas (shared by forms, API and tests) ─────────────────────────────────────────
 const cents = z
-  .number({ error: "Enter an amount in pesos, like 12,500." })
+  .number({ error: "Enter an amount in pesos, like 2,500,000 or 2.5m." })
   .int()
   .min(0, "Amounts can't be negative.")
   .max(9_000_000_000_000, "That amount is too large.");

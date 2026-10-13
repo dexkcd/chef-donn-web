@@ -17,7 +17,10 @@ specs say El Nido — the pilot moved; don't reintroduce El Nido facts).
 ## Invariants
 
 - **Money is integer centavos** (`bigint`, `Cents`), percentages in basis points. No floats —
-  AI amounts arrive as decimal strings and go through `parsePeso`.
+  AI amounts arrive as decimal strings and go through `parsePeso`; what people type ("2.5m",
+  "3 000 000") goes through `parsePesoInput` (form helpers in `src/server/actions/form.ts`).
+- Forms use `ActionForm` (manual dispatch, so a refusal keeps what was typed); field errors
+  are re-keyed to input names by `toFormState` (`totalBudgetCents` → `totalBudget`).
 - **Paid is never stored**: it's `SUM(payment)` (non-voided). Effective committed =
   `max(committed, paid)`. Overspend is always shown as drawn from contingency.
 - **`src/domain` is pure** — no IO, framework or clock (ESLint enforces). Pass `today`

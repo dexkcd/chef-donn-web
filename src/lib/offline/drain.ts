@@ -5,17 +5,35 @@
 import { listOutbox, removeItem, updateItem, type OutboxItem } from "./outbox";
 
 let running: Promise<void> | null = null;
+let followUp: Promise<void> | null = null;
+let followUpForce = false;
 
 /**
  * `force` ignores retry backoff — used when the person taps "Send now" or the browser says
- * the connection is back. The periodic timer respects backoff.
+ * the connection is back. The periodic timer respects backoff. Resolves once everything that
+ * was queued when it was called has been tried.
  */
 export function drainOutbox(opts: { force?: boolean } = {}): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  running ??= run(opts.force ?? false).finally(() => {
-    running = null;
-  });
-  return running;
+  const force = opts.force ?? false;
+  if (!running) {
+    running = run(force).finally(() => {
+      running = null;
+    });
+    return running;
+  }
+  // A run is under way and may have listed the outbox before this item went in: one more
+  // pass after it, shared by everyone who asks in the meantime.
+  followUpForce ||= force;
+  followUp ??= running
+    .catch(() => {})
+    .then(() => {
+      const f = followUpForce;
+      followUp = null;
+      followUpForce = false;
+      return drainOutbox({ force: f });
+    });
+  return followUp;
 }
 
 function backoffMs(attempts: number): number {
