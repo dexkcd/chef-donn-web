@@ -6,6 +6,8 @@ export const env = {
   bootstrapOwnerEmail: process.env.BOOTSTRAP_OWNER_EMAIL?.trim().toLowerCase() || null,
   resendApiKey: process.env.RESEND_API_KEY || null,
   mailFrom: process.env.MAIL_FROM ?? "Chef Donn's <login@chefdonns.ph>",
+  /** No Resend yet: print sign-in links to the server logs (deploy-time stopgap, opt-in). */
+  signinLinksToLogs: process.env.SIGNIN_LINKS_TO_LOGS === "1",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
   receiptModel: process.env.RECEIPT_MODEL ?? "claude-opus-5-5",
   priceModel: process.env.PRICE_MODEL ?? "claude-opus-5-5",

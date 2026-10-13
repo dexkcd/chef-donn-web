@@ -4,7 +4,9 @@ import { env } from "./env";
 
 /**
  * Send a sign-in link. In production this goes through Resend; locally (and in tests) it is
- * written to the dev mailbox at /api/dev/mailbox and printed to the console.
+ * written to the dev mailbox at /api/dev/mailbox and printed to the console. A deployment
+ * without Resend can opt in to SIGNIN_LINKS_TO_LOGS=1: the link goes to the server logs only
+ * (readable by the hosting project's members), never to a public page.
  */
 export async function sendMagicLinkEmail(to: string, url: string): Promise<void> {
   const subject = "Your Chef Donn's sign-in link";
@@ -17,6 +19,10 @@ export async function sendMagicLinkEmail(to: string, url: string): Promise<void>
       body: JSON.stringify({ from: env.mailFrom, to, subject, text: body }),
     });
     if (!res.ok) throw new Error(`Email provider refused the message (${res.status})`);
+    return;
+  }
+  if (env.signinLinksToLogs) {
+    console.info(`[sign-in] link for ${to}: ${url}`);
     return;
   }
   if (env.isProd && !process.env.ENABLE_DEV_MAILBOX) throw new Error("RESEND_API_KEY is not set — sign-in emails can't be sent.");

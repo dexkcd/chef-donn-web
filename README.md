@@ -51,9 +51,25 @@ pnpm check       # all of the above
 
 ## Deploy (Railway)
 
-One web service + Postgres + a bucket. Pre-deploy command: `pnpm db:migrate`. Set the variables
-in `.env.example` (`STORAGE_DRIVER=s3` with the bucket's credentials, `RESEND_API_KEY`,
-`ANTHROPIC_API_KEY`, `BETTER_AUTH_SECRET`, `APP_URL`).
+Project **chef-donn-web**: a `web` service (this repo, branch-deployed), `Postgres`, and a
+private `receipts` bucket. Pre-deploy command: `pnpm db:migrate` (migrations + roadmap
+templates). Health check: `/login`.
+
+`web` variables (see `.env.example`):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `APP_URL`, `BETTER_AUTH_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+| `BETTER_AUTH_SECRET` | 32+ random characters |
+| `BOOTSTRAP_OWNER_EMAIL` | The first owner's email |
+| `STORAGE_DRIVER` + `S3_*` | `s3` + references to the bucket (`${{receipts.ENDPOINT}}`, …) |
+| `ANTHROPIC_API_KEY` | **Add your key here** to turn on receipt reading and price search |
+| `RESEND_API_KEY`, `MAIL_FROM` | Sign-in emails (needs a verified sending domain) |
+| `SIGNIN_LINKS_TO_LOGS` | `1` until Resend is set up: sign-in links appear in the `web` deploy logs as `[sign-in] link for …` |
+
+Never set `ENABLE_DEV_MAILBOX`, `AI_EXTRACTOR`, `PRICE_PROVIDER` or `ALLOW_INSECURE_CALLBACKS`
+on a public deployment. Railway stages variable changes — press **Deploy** after editing.
 
 ## Layout
 
