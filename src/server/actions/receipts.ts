@@ -1,0 +1,43 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import type { FormState } from "@/ui/form";
+import { confirmInput, confirmReceipt, rejectInput, rejectReceipt } from "../services/receipts";
+import { act } from "../viewer";
+import { optPeso, optStr, peso, str, toFormState } from "./form";
+
+export async function confirmReceiptAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const lineChoice = str(fd, "moneyLineId");
+  const isNew = lineChoice === "__new__";
+  const action = isNew ? "receipt.confirm_new_line" : "receipt.confirm_existing_line";
+  const r = await act(
+    action,
+    confirmInput,
+    {
+      receiptId: str(fd, "receiptId"),
+      vendorName: str(fd, "vendorName"),
+      vendorTin: optStr(fd, "vendorTin"),
+      docNumber: optStr(fd, "docNumber"),
+      date: str(fd, "date"),
+      totalCents: peso(fd, "total"),
+      vatableCents: optPeso(fd, "vatable"),
+      vatCents: optPeso(fd, "vat"),
+      method: str(fd, "method"),
+      moneyLineId: isNew || !lineChoice ? null : lineChoice,
+      newLine: isNew ? { categoryId: str(fd, "newLineCategoryId"), description: str(fd, "newLineDescription") } : null,
+      confirmed: fd.getAll("confirmed").map(String),
+      notDuplicate: str(fd, "notDuplicate") === "1",
+    },
+    confirmReceipt,
+  );
+  if (!r.ok) return toFormState(r);
+  toFormState(r);
+  redirect("/receipts?saved=1");
+}
+
+export async function rejectReceiptAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const r = await act("receipt.reject", rejectInput, { receiptId: str(fd, "receiptId"), reason: str(fd, "reason") }, rejectReceipt);
+  if (!r.ok) return toFormState(r);
+  toFormState(r);
+  redirect("/receipts");
+}
