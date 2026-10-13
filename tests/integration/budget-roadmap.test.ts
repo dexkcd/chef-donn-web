@@ -40,7 +40,7 @@ describe("onboarding and the roadmap", () => {
     const fitOutLine = lines.find((l) => l.sourceId === fitOut.id)!;
     expect(fitOutLine).toMatchObject({ locked: true, sourceType: "task", plannedCents: 900_000_00 });
 
-    // Contingency line = 10% of planned in normal categories.
+    // Contingency line = 10% of the estimates in normal categories.
     const overview = await budgetOverview(db, ws.id, "2026-10-13");
     const normalPlanned = overview.rollup.categories.filter((c) => c.category.kind === "normal").reduce((a, c) => a + c.planned, 0);
     expect(overview.rollup.contingency.planned).toBe(Math.round(normalPlanned / 10));

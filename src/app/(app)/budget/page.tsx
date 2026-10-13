@@ -28,7 +28,9 @@ export default async function BudgetPage() {
       <Card>
         <KeyValue
           items={[
-            { k: "○ Planned", v: <Money cents={o.rollup.totals.planned} /> },
+            { k: "○ Planned", v: <Money cents={o.plan.planned} /> },
+            ...(o.plan.unallocated > 0 ? [{ k: "Not yet allocated", v: <Money cents={o.plan.unallocated} /> }] : []),
+            ...(o.plan.over > 0 ? [{ k: "▲ Over your total", v: <Money cents={o.plan.over} /> }] : []),
             { k: "● Committed", v: <Money cents={o.rollup.totals.committed} /> },
             { k: "✓ Paid", v: <Money cents={o.rollup.totals.paid} /> },
             { k: "Forecast to open", v: <Money cents={o.rollup.totals.forecast + Math.max(0, o.rollup.contingency.left)} /> },

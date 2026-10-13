@@ -2,10 +2,10 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { budgetCategory, moneyLine, payment } from "@/db/schema";
-import { rollupBudget } from "@/domain/budget";
+import { planVsTotal, rollupBudget } from "@/domain/budget";
 import { can } from "@/domain/permissions";
 import { apiError } from "@/server/api-auth";
-import { loadBudgetInputs } from "@/server/services/budget-data";
+import { loadBudgetInputs, loadProfile } from "@/server/services/budget-data";
 import { getViewer } from "@/server/viewer";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
   const today = new Date().toISOString().slice(0, 10);
 
   if (kind === "lines") {
-    const inputs = await loadBudgetInputs(db, ws);
+    const [inputs, profile] = await Promise.all([loadBudgetInputs(db, ws), loadProfile(db, ws)]);
     const rollup = rollupBudget(inputs.categories, inputs.lineInputs, inputs.paymentInputs);
     const rows: (string | number | null)[][] = [["category", "line", "source", "planned_php", "committed_php", "paid_php", "forecast_php", "over_plan_php", "due_date", "payee", "closed"]];
     for (const c of rollup.categories) {
@@ -40,6 +40,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
         rows.push([c.category.name, l.line.description, l.line.sourceType, pesos(l.planned), pesos(l.committed), pesos(l.paid), pesos(l.forecast), pesos(l.overBy), l.line.dueDate, raw.payeeName, l.line.closed ? "yes" : "no"]);
       }
     }
+    // So the planned column adds up to the app's "Planned" (which fills to the total).
+    const { unallocated } = planVsTotal(rollup, profile.totalBudgetCents);
+    if (unallocated > 0) rows.push(["—", "Not yet allocated (total you can spend − estimates)", "total_budget", pesos(unallocated), pesos(0), pesos(0), pesos(0), pesos(0), null, null, "no"]);
     return new Response(csv(rows), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="budget-lines-${today}.csv"` } });
   }
 

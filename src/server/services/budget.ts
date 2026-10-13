@@ -123,7 +123,7 @@ export async function syncContingencyLine(ctx: ServiceCtx): Promise<void> {
   if (!contingencyCat) return;
   const target = contingencyTarget(inputs.categories, inputs.lineInputs.filter((l) => l.sourceType !== "contingency_rule"), profile.contingencyBp);
   const existing = inputs.lines.find((l) => l.sourceType === "contingency_rule");
-  const description = `Contingency (${profile.contingencyBp / 100}% of planned)`;
+  const description = `Contingency (${profile.contingencyBp / 100}% of estimates)`;
   if (existing) {
     if (existing.plannedCents !== target || existing.description !== description || existing.categoryId !== contingencyCat.id) {
       await ctx.tx.update(moneyLine).set({ plannedCents: target, description, categoryId: contingencyCat.id }).where(eq(moneyLine.id, existing.id));

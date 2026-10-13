@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contingencyTarget, rollupBudget, type CategoryInput, type LineInput, type PaymentInput } from "./budget";
+import { contingencyTarget, planVsTotal, rollupBudget, type CategoryInput, type LineInput, type PaymentInput } from "./budget";
 import { cashPosition, runway } from "./cash";
 import { upcomingPayments } from "./upcoming";
 
@@ -28,6 +28,39 @@ const pay = (moneyLineId: string, amountCents: number, paidOn = "2026-10-01"): P
   moneyLineId,
   amountCents,
   paidOn,
+});
+
+describe("planVsTotal", () => {
+  const lines = [
+    line({ id: "fridge", categoryId: "c-equip", plannedCents: 2_000_000_00 }),
+    line({ id: "reserve", categoryId: "c-wc", plannedCents: 722_200_00 }),
+    line({ id: "rule", categoryId: "c-cont", plannedCents: 326_664_00, sourceType: "contingency_rule", locked: true }),
+  ];
+  const r = rollupBudget(cats, lines, []);
+
+  it("fills Planned to the total and shows the rest as not yet allocated", () => {
+    expect(planVsTotal(r, 3_500_000_00)).toEqual({
+      total: 3_500_000_00,
+      estimates: 2_722_200_00,
+      contingency: 326_664_00,
+      allocated: 3_048_864_00,
+      unallocated: 451_136_00,
+      over: 0,
+      planned: 3_500_000_00,
+    });
+  });
+
+  it("shows the lines and the overrun when estimates exceed the total", () => {
+    expect(planVsTotal(r, 3_000_000_00)).toMatchObject({ planned: 3_048_864_00, over: 48_864_00, unallocated: 0 });
+  });
+
+  it("without a total, Planned is what the lines add up to", () => {
+    expect(planVsTotal(r, null)).toMatchObject({ planned: 3_048_864_00, over: 0, unallocated: 0, total: null });
+  });
+
+  it("a zero total makes every estimate an overrun", () => {
+    expect(planVsTotal(r, 0)).toMatchObject({ planned: 3_048_864_00, over: 3_048_864_00, unallocated: 0 });
+  });
 });
 
 describe("rollupBudget", () => {

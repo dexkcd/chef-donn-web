@@ -40,12 +40,16 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await expect(page.getByText("Due in the next 14 days", { exact: true })).toBeVisible();
   await expect(page.getByText("Kusina sa Port Barton").first()).toBeVisible();
   await expect(page.getByText(/Port Barton, San Vicente, Palawan/).first()).toBeVisible();
-  const plannedBefore = await page.locator("section").filter({ hasText: "○Planned" }).first().innerText();
 
-  // The total shows on the Overview; editing it keeps what was typed when it's refused,
-  // and takes the way people write budgets ("3m").
+  // Planned fills to the total you can spend; what the estimates don't use yet is shown.
+  const plannedCard = page.locator("section").filter({ hasText: "○Planned" }).first();
   const totalCard = page.locator("section").filter({ hasText: "Total you can spend" });
   await expect(totalCard).toContainText("₱3,500,000");
+  await expect(totalCard).toContainText("Not yet allocated");
+  await expect(plannedCard).toContainText("₱3,500,000");
+
+  // Editing the total keeps what was typed when it's refused, takes the way people write
+  // budgets ("4m"), and Planned moves with it.
   await page.goto("/onboarding");
   await expect(page).toHaveURL(/\/settings\/profile$/);
   const total = page.getByLabel("Total you can spend to open");
@@ -54,12 +58,14 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.locator("#f-totalBudget-err")).toContainText("2,500,000 or 2.5m");
   await expect(total).toHaveValue("abc");
-  await total.fill("3m");
+  await total.fill("4m");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByText("Profile saved.")).toBeVisible();
   await expect(page.locator("#f-totalBudget-err")).toHaveCount(0);
   await page.goto("/");
-  await expect(totalCard).toContainText("₱3,000,000");
+  await expect(totalCard).toContainText("₱4,000,000");
+  await expect(plannedCard).toContainText("₱4,000,000");
+  const breakdownBefore = await totalCard.innerText();
 
   // Roadmap: building → permits are blocked in the right order.
   await page.getByRole("link", { name: "Roadmap" }).last().click();
@@ -77,9 +83,10 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await expect(page.getByText("Applied — the budget moved with it.")).toBeVisible();
   await expect(page.getByText("Prices found online").first()).toBeVisible();
 
+  // The estimate moved: the breakdown changes while Planned stays at the total.
   await page.getByRole("link", { name: "Overview" }).last().click();
-  const plannedAfter = await page.locator("section").filter({ hasText: "○Planned" }).first().innerText();
-  expect(plannedAfter).not.toEqual(plannedBefore);
+  await expect(plannedCard).toContainText("₱4,000,000");
+  expect(await totalCard.innerText()).not.toEqual(breakdownBefore);
 
   // Receipt: capture → AI (fake) reads it → confirm → it's a payment.
   await page.goto("/receipts/capture");

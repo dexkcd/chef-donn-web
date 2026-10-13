@@ -189,6 +189,41 @@ export function rollupBudget(
   return { categories: categoryRollups, totals, contingency, stillToPay, lineById };
 }
 
+/**
+ * "Planned" against the total the owner can spend. Planned fills to the total: whatever the
+ * line estimates don't use yet shows as not yet allocated (a reserve, like contingency — not a
+ * bill, so it isn't in "still to pay"). Estimates over the total stay visible as `over`.
+ * Nothing here changes an estimate.
+ */
+export interface PlanVsTotal {
+  total: Cents | null;
+  /** Planned on normal and working-capital lines. */
+  estimates: Cents;
+  /** Planned in the contingency category. */
+  contingency: Cents;
+  /** estimates + contingency — what the lines add up to. */
+  allocated: Cents;
+  unallocated: Cents;
+  over: Cents;
+  /** What "Planned" shows: the total, or the lines if they add up to more. */
+  planned: Cents;
+}
+
+export function planVsTotal(rollup: BudgetRollup, totalBudgetCents: Cents | null): PlanVsTotal {
+  const contingency = sumCents(rollup.categories.filter((c) => c.category.kind === "contingency").map((c) => c.planned));
+  const allocated = rollup.totals.planned;
+  const total = totalBudgetCents;
+  return {
+    total,
+    estimates: allocated - contingency,
+    contingency,
+    allocated,
+    unallocated: total === null ? 0 : Math.max(0, total - allocated),
+    over: total === null ? 0 : Math.max(0, allocated - total),
+    planned: total === null ? allocated : Math.max(total, allocated),
+  };
+}
+
 function summariseContingency(categories: readonly CategoryRollup[]): ContingencySummary {
   const pool = categories.filter((c) => c.category.kind === "contingency");
   const others = categories.filter((c) => c.category.kind === "normal");

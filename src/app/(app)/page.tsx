@@ -4,7 +4,7 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { receipt } from "@/db/schema";
 import { formatDate, manilaToday } from "@/domain/dates";
-import { formatBp, formatPeso, ratioBp } from "@/domain/money";
+import { formatBp, formatPeso } from "@/domain/money";
 import { can } from "@/domain/permissions";
 import { nextUp } from "@/domain/roadmap";
 import { budgetOverview } from "@/server/services/budget-data";
@@ -35,8 +35,7 @@ export default async function OverviewPage() {
   const due = [...o.upcoming14.overdue, ...o.upcoming14.due];
   const canWrite = v.principal.actor.role !== "bookkeeper";
   const canEditProfile = can(v.principal.actor.role, "profile.edit");
-  const totalBudget = o.profile.totalBudgetCents;
-  const planShare = totalBudget ? ratioBp(totals.planned, totalBudget) : null;
+  const plan = o.plan;
 
   return (
     <div className="flex flex-col gap-5">
@@ -44,7 +43,7 @@ export default async function OverviewPage() {
         snapshot={{
           asOf: new Date().toISOString(),
           restaurant: o.profile.name,
-          planned: totals.planned,
+          planned: plan.planned,
           committed: totals.committed,
           paid: totals.paid,
           cashOnHand: o.cash.cashOnHand,
@@ -83,7 +82,7 @@ export default async function OverviewPage() {
       {/* 2 · Planned / committed / paid */}
       <div className="grid grid-cols-3 gap-2">
         {[
-          { tone: "planned" as const, v: totals.planned },
+          { tone: "planned" as const, v: plan.planned },
           { tone: "committed" as const, v: totals.committed },
           { tone: "paid" as const, v: totals.paid },
         ].map((k) => (
@@ -93,23 +92,41 @@ export default async function OverviewPage() {
           </Card>
         ))}
       </div>
-      <Card className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 !py-3">
-        {totalBudget !== null ? (
+      <Card className="!py-3">
+        {plan.total !== null ? (
           <>
-            <div>
-              <div className="label text-[13px] text-muted">Total you can spend</div>
-              <div className="num text-[20px] font-semibold">{formatPeso(totalBudget, { noCentavos: true })}</div>
-            </div>
-            {planShare !== null && (
-              <div className="text-[15px] text-muted">
-                plan uses <span className="num">{formatBp(Math.round(planShare / 100) * 100)}</span>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="label text-[13px] text-muted">Total you can spend</div>
+                <div className="num text-[20px] font-semibold">{formatPeso(plan.total, { noCentavos: true })}</div>
               </div>
-            )}
-            {canEditProfile && (
-              <Link href="/settings/profile" className="label flex min-h-[56px] items-center px-2 text-[14px] text-green underline">
-                Edit
-              </Link>
-            )}
+              {canEditProfile && (
+                <Link href="/settings/profile" className="label flex min-h-[56px] items-center px-2 text-[14px] text-green underline">
+                  Edit
+                </Link>
+              )}
+            </div>
+            <dl className="mt-1 flex flex-col gap-0.5 text-[15px]">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Estimates</dt>
+                <dd className="num">{formatPeso(plan.estimates, { noCentavos: true })}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Contingency ({formatBp(o.profile.contingencyBp)})</dt>
+                <dd className="num">{formatPeso(plan.contingency, { noCentavos: true })}</dd>
+              </div>
+              {plan.over > 0 ? (
+                <div className="flex justify-between gap-3 font-semibold text-red">
+                  <dt>▲ Over your total</dt>
+                  <dd className="num">{formatPeso(plan.over, { noCentavos: true })}</dd>
+                </div>
+              ) : (
+                <div className="flex justify-between gap-3">
+                  <dt>○ Not yet allocated</dt>
+                  <dd className="num">{formatPeso(plan.unallocated, { noCentavos: true })}</dd>
+                </div>
+              )}
+            </dl>
           </>
         ) : canEditProfile ? (
           <Link href="/settings/profile" className="flex min-h-[56px] items-center font-semibold text-green underline">
@@ -119,15 +136,15 @@ export default async function OverviewPage() {
           <span className="text-muted">No total budget set yet.</span>
         )}
       </Card>
-      {o.profile.totalBudgetCents !== null && totals.planned > o.profile.totalBudgetCents && (
-        <Notice tone="warning" title={`The plan is ${formatPeso(totals.planned - o.profile.totalBudgetCents, { noCentavos: true })} over your total budget`}>
-          You set {formatPeso(o.profile.totalBudgetCents, { noCentavos: true })} as the most you can spend. Trim estimates or add funding.
+      {plan.total !== null && plan.over > 0 && (
+        <Notice tone="warning" title={`The plan is ${formatPeso(plan.over, { noCentavos: true })} over your total budget`}>
+          You set {formatPeso(plan.total, { noCentavos: true })} as the most you can spend. Trim estimates or add funding.
         </Notice>
       )}
 
       {/* 3 · Contingency */}
       <Card>
-        <SectionTitle action={<span className="num text-[14px] text-muted">{formatBp(o.profile.contingencyBp)} of plan</span>}>Contingency left</SectionTitle>
+        <SectionTitle action={<span className="num text-[14px] text-muted">{formatBp(o.profile.contingencyBp)} of estimates</span>}>Contingency left</SectionTitle>
         <div className={`num text-[24px] font-semibold ${contingency.exhausted ? "text-red" : ""}`}>
           {formatPeso(contingency.left, { noCentavos: true })}
           <span className="text-[15px] font-normal text-muted"> of {formatPeso(contingency.planned, { noCentavos: true })}</span>

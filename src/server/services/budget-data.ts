@@ -2,7 +2,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { Executor } from "@/db/client";
 import { budgetCategory, fundingSource, fundingTranche, moneyLine, payment, restaurantProfile } from "@/db/schema";
-import { rollupBudget, type CategoryInput, type LineInput, type PaymentInput } from "@/domain/budget";
+import { planVsTotal, rollupBudget, type CategoryInput, type LineInput, type PaymentInput } from "@/domain/budget";
 import { cashPosition, runway, type FundingSourceInput, type FundingTrancheInput } from "@/domain/cash";
 import type { LocalDate } from "@/domain/dates";
 import { upcomingPayments } from "@/domain/upcoming";
@@ -64,6 +64,8 @@ export async function budgetOverview(exec: Executor, workspaceId: string, today:
     profile,
     inputs,
     rollup,
+    /** "Planned" fills to the total you can spend; the rest shows as not yet allocated. */
+    plan: planVsTotal(rollup, profile.totalBudgetCents),
     cash,
     runway: runway(cash, rollup, today, profile.targetOpeningDate),
     upcoming14: upcomingPayments(rollup, today, 14),
