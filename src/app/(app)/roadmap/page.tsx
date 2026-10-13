@@ -16,14 +16,14 @@ export default async function RoadmapPage() {
   const profile = await loadProfile(db, v.principal.workspaceId);
   const { view, byId } = await loadRoadmap(db, v.principal.workspaceId, profile.startingPoint);
 
-  const row = (t: TaskView) => {
+  const row = (t: TaskView, catchUp = false) => {
     const full = byId.get(t.task.id)!;
     return (
       <li key={t.task.id}>
         <Link href={`/roadmap/${t.task.id}` as Route} className="block py-2.5">
           <div className="flex items-start justify-between gap-3">
             <span className={t.state.kind === "done" || t.state.kind === "skipped" ? "text-muted" : "font-semibold"}>{t.task.title}</span>
-            <StatusBadge tone={toneFor(t)} />
+            {catchUp && t.state.kind === "available" ? <StatusBadge tone="unverified" label="Done already?" /> : <StatusBadge tone={toneFor(t)} />}
           </div>
           <div className="mt-0.5 flex flex-wrap gap-x-3 text-[14px] text-muted">
             <span className="label text-[12px]">{full.area}</span>
@@ -39,6 +39,9 @@ export default async function RoadmapPage() {
       </li>
     );
   };
+
+  // If nothing in the current stage can start yet, the earlier steps are what to do now.
+  const catchUpFirst = view.catchUp.length > 0 && !view.now.some((t) => t.state.kind === "available" || t.state.kind === "in_progress");
 
   const groupByStage = (vs: TaskView[]) => {
     const m = new Map<string, TaskView[]>();
@@ -66,25 +69,45 @@ export default async function RoadmapPage() {
           ))}
       </div>
 
+      {catchUpFirst ? (
+        <>
+      {view.catchUp.length > 0 && (
+        <Card>
+          <SectionTitle>Catch up — mark what&rsquo;s done</SectionTitle>
+          <p className="mb-1 text-[14px] text-muted">Earlier steps you may already have finished. Open each one and tap ✓ Done or “Doesn&rsquo;t apply” so the {STAGE_LABELS[view.focusStage]} steps unblock.</p>
+          <ul className="divide-y-[1.5px] divide-line">{view.catchUp.map((t) => row(t, true))}</ul>
+        </Card>
+      )}
+
       <Card strong>
         <SectionTitle>Now · {STAGE_LABELS[view.focusStage]}</SectionTitle>
-        {view.now.length === 0 ? <EmptyState title="Nothing in this stage" /> : <ul className="divide-y-[1.5px] divide-line">{view.now.map(row)}</ul>}
+        {view.now.length === 0 ? <EmptyState title="Nothing in this stage" /> : <ul className="divide-y-[1.5px] divide-line">{view.now.map((t) => row(t))}</ul>}
+      </Card>
+
+        </>
+      ) : (
+        <>
+      <Card strong>
+        <SectionTitle>Now · {STAGE_LABELS[view.focusStage]}</SectionTitle>
+        {view.now.length === 0 ? <EmptyState title="Nothing in this stage" /> : <ul className="divide-y-[1.5px] divide-line">{view.now.map((t) => row(t))}</ul>}
       </Card>
 
       {view.catchUp.length > 0 && (
         <Card>
           <SectionTitle>Catch up — mark what&rsquo;s done</SectionTitle>
-          <p className="mb-1 text-[14px] text-muted">Earlier steps you may already have finished. Tick them off or skip them so later steps unblock.</p>
-          <ul className="divide-y-[1.5px] divide-line">{view.catchUp.map(row)}</ul>
+          <p className="mb-1 text-[14px] text-muted">Earlier steps you may already have finished. Open each one and tap ✓ Done or “Doesn&rsquo;t apply” so the {STAGE_LABELS[view.focusStage]} steps unblock.</p>
+          <ul className="divide-y-[1.5px] divide-line">{view.catchUp.map((t) => row(t, true))}</ul>
         </Card>
       )}
 
+        </>
+      )}
       {groupByStage(view.later).map(([stage, items]) => (
         <details key={stage} className="rounded-lg border-[1.5px] border-line bg-surface p-4">
           <summary className="label cursor-pointer text-[15px] text-muted">
             Later · {STAGE_LABELS[stage as keyof typeof STAGE_LABELS]} ({items.length})
           </summary>
-          <ul className="mt-2 divide-y-[1.5px] divide-line">{items.map(row)}</ul>
+          <ul className="mt-2 divide-y-[1.5px] divide-line">{items.map((t) => row(t))}</ul>
         </details>
       ))}
 
