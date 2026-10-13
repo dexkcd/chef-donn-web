@@ -32,6 +32,9 @@ export const ACTIONS = [
   "task.edit",
   "note.add",
   "export.csv",
+  "prices.search",
+  "prices.apply",
+  "api_keys.manage",
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -42,7 +45,7 @@ const MATRIX: Record<Role, ReadonlySet<Action>> = {
   partner: FULL,
   // "Add notes, photos, receipts, update statuses; no deletions or budget changes."
   helper: new Set<Action>(["view.workspace", "receipt.capture", "receipt.confirm_existing_line", "task.set_status", "note.add"]),
-  // "Read-only on budget, payments, contracts and permits; export."
+  // "Read-only on budget, payments, contracts and permits; export." (Price results are readable.)
   bookkeeper: new Set<Action>(["view.workspace", "export.csv"]),
 };
 
@@ -74,4 +77,7 @@ const ACTION_PHRASES: Record<Action, string> = {
   "task.edit": "change task estimates",
   "note.add": "add notes",
   "export.csv": "export",
+  "prices.search": "run price searches",
+  "prices.apply": "apply prices to estimates",
+  "api_keys.manage": "manage API keys",
 };

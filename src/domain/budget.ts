@@ -16,6 +16,17 @@ import { mulBp, ratioBp, sumCents, type BasisPoints, type Cents } from "./money"
 
 export type CategoryKind = "normal" | "contingency" | "working_capital";
 
+export const PAYMENT_METHODS = ["cash", "bank", "gcash", "maya", "card", "other"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: "Cash",
+  bank: "Bank transfer",
+  gcash: "GCash",
+  maya: "Maya",
+  card: "Card",
+  other: "Other",
+};
+
 export type SourceType =
   | "manual"
   | "task"

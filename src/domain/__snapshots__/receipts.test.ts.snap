@@ -33,6 +33,9 @@ exports[`can() > matches the spec's role matrix 1`] = `
     "task.edit",
     "note.add",
     "export.csv",
+    "prices.search",
+    "prices.apply",
+    "api_keys.manage",
   ],
   "partner": [
     "view.workspace",
@@ -54,6 +57,9 @@ exports[`can() > matches the spec's role matrix 1`] = `
     "task.edit",
     "note.add",
     "export.csv",
+    "prices.search",
+    "prices.apply",
+    "api_keys.manage",
   ],
 }
 `;
