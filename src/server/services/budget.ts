@@ -4,6 +4,7 @@ import { z } from "zod";
 import { budgetCategory, clientMutation, fundingSource, fundingTranche, moneyLine, payment, restaurantProfile } from "@/db/schema";
 import { contingencyTarget, PAYMENT_METHODS } from "@/domain/budget";
 import { isLocalDate } from "@/domain/dates";
+import { STARTING_POINTS } from "@/domain/roadmap";
 import { Rejection, userIdOf, type ServiceCtx } from "../context";
 import { loadBudgetInputs } from "./budget-data";
 
@@ -87,6 +88,7 @@ export const profileInput = z.object({
   totalBudgetCents: cents.nullable().optional(),
   contingencyBp: z.number().int().min(0).max(5000, "Keep contingency at or under 50%."),
   seats: z.number().int().min(0).max(2000).nullable().optional(),
+  startingPoint: z.enum(STARTING_POINTS).optional(),
 });
 
 // ── helpers ───────────────────────────────────────────────────────────────────────────────
@@ -343,6 +345,7 @@ export async function updateProfile(ctx: ServiceCtx, input: z.output<typeof prof
       totalBudgetCents: input.totalBudgetCents ?? null,
       contingencyBp: input.contingencyBp,
       seats: input.seats ?? null,
+      ...(input.startingPoint ? { startingPoint: input.startingPoint } : {}),
     })
     .where(eq(restaurantProfile.workspaceId, ctx.workspaceId))
     .returning();

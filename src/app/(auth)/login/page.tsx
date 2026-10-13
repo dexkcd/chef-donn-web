@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requestSignInLink } from "@/server/actions/auth";
 import { ActionForm, Submit, TextField } from "@/ui/form";
 import { Notice } from "@/ui/kit";
+import { ClearPageCache } from "@/ui/sw-register";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -9,6 +10,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
   return (
     <div className="flex flex-col gap-4">
+      <ClearPageCache />
       <h1 className="display text-[28px]">Sign in</h1>
       <p className="text-muted">We&rsquo;ll email you a link. No password to remember.</p>
       {error && <Notice tone="danger" title="That sign-in link didn't work">Links work once and expire after 15 minutes. Ask for a new one.</Notice>}

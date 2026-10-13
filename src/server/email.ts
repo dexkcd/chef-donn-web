@@ -19,7 +19,7 @@ export async function sendMagicLinkEmail(to: string, url: string): Promise<void>
     if (!res.ok) throw new Error(`Email provider refused the message (${res.status})`);
     return;
   }
-  if (env.isProd) throw new Error("RESEND_API_KEY is not set — sign-in emails can't be sent.");
+  if (env.isProd && !process.env.ENABLE_DEV_MAILBOX) throw new Error("RESEND_API_KEY is not set — sign-in emails can't be sent.");
 
   await db.insert(devMail).values({ to, subject, url, body });
   console.info(`[dev-mail] sign-in link for ${to}: ${url}`);

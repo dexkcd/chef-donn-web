@@ -5,6 +5,7 @@ import { manilaToday } from "@/domain/dates";
 import { can } from "@/domain/permissions";
 import { budgetOverview } from "@/server/services/budget-data";
 import { requireMember } from "@/server/viewer";
+import { ExportLinks } from "@/ui/download-link";
 import { BudgetBar, BudgetBarLegend } from "@/ui/budget-bar";
 import { ButtonLink, Card, KeyValue, Money, PageHeader, SectionTitle } from "@/ui/kit";
 
@@ -73,14 +74,7 @@ export default async function BudgetPage() {
       {can(role, "export.csv") && (
         <Card>
           <SectionTitle>For the bookkeeper</SectionTitle>
-          <div className="flex flex-col gap-2">
-            <a className="font-semibold text-green underline" href="/api/export/lines">
-              Download budget lines (CSV)
-            </a>
-            <a className="font-semibold text-green underline" href="/api/export/payments">
-              Download payments (CSV)
-            </a>
-          </div>
+          <ExportLinks />
         </Card>
       )}
     </div>

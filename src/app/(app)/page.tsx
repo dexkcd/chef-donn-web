@@ -22,6 +22,7 @@ export default async function OverviewPage() {
   const o = await budgetOverview(db, ws, today);
   const roadmap = await loadRoadmap(db, ws, o.profile.startingPoint);
   const next = nextUp(roadmap.view, 3);
+  const catchUpIds = new Set(roadmap.view.catchUp.map((t) => t.task.id));
   const [{ toReview }] = (await db
     .select({ toReview: sql<number>`count(*)::int` })
     .from(receipt)
@@ -188,6 +189,11 @@ export default async function OverviewPage() {
         >
           What&rsquo;s next
         </SectionTitle>
+        {roadmap.view.catchUp.length > 0 && (
+          <p className="mb-2 text-[14px] text-muted">
+            {roadmap.view.catchUp.length} earlier step{roadmap.view.catchUp.length === 1 ? " isn't" : "s aren't"} ticked off yet. Mark what&rsquo;s already done so later steps unblock.
+          </p>
+        )}
         {next.length === 0 ? (
           <p className="text-muted">Nothing you can start right now — everything left is waiting on something.</p>
         ) : (
@@ -196,7 +202,11 @@ export default async function OverviewPage() {
               <li key={t.task.id}>
                 <Link href={`/roadmap/${t.task.id}`} className="flex min-h-[56px] items-center justify-between gap-3 py-2">
                   <span className="font-semibold">{t.task.title}</span>
-                  <StatusBadge tone={t.state.kind === "in_progress" ? "in_progress" : "available"} />
+                  {catchUpIds.has(t.task.id) && t.state.kind === "available" ? (
+                    <StatusBadge tone="unverified" label="Done already?" />
+                  ) : (
+                    <StatusBadge tone={t.state.kind === "in_progress" ? "in_progress" : "available"} />
+                  )}
                 </Link>
               </li>
             ))}

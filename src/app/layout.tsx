@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { SwRegister } from "@/ui/sw-register";
 import "./globals.css";
 
 const archivo = localFont({ src: "../fonts/archivo_variable.ttf", variable: "--font-archivo", weight: "100 900", display: "swap" });
@@ -35,6 +36,7 @@ export const metadata: Metadata = {
   description: "Opening budget, receipts and roadmap for a first restaurant.",
   applicationName: "Chef Donn's",
   appleWebApp: { capable: true, title: "Chef Donn's", statusBarStyle: "default" },
+  icons: { icon: "/icons/192", apple: "/icons/180" },
 };
 
 export const viewport: Viewport = {
@@ -47,7 +49,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${archivo.variable} ${barlow.variable} ${barlowCondensed.variable} ${plexMono.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <SwRegister enabled={process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_SW_DEV === "1"} />
+      </body>
     </html>
   );
 }

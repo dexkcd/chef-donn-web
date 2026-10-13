@@ -56,6 +56,6 @@ class S3Storage implements StorageDriver {
 
 let driver: StorageDriver | null = null;
 export function storage(): StorageDriver {
-  driver ??= env.storageDriver === "s3" ? new S3Storage() : new FsStorage(join(process.cwd(), env.storageDir));
+  driver ??= env.storageDriver === "s3" ? new S3Storage() : new FsStorage(join(/*turbopackIgnore: true*/ process.cwd(), env.storageDir));
   return driver;
 }

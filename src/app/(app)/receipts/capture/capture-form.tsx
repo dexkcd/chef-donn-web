@@ -1,23 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useOffline } from "next/offline";
 import { useRef, useState } from "react";
 import { compressForUpload } from "@/lib/offline/compress";
 import { drainOutbox } from "@/lib/offline/drain";
 import { enqueue, type OutboxItem } from "@/lib/offline/outbox";
 import { Button, Notice } from "@/ui/kit";
+import { OutboxList } from "@/ui/outbox-list";
 
 /**
  * Take or pick a photo → shrink it → put it in the outbox with a fresh id → try to send.
  * With no signal it simply waits on the phone and goes later; the id never changes.
  */
-export function CaptureForm() {
+export function CaptureForm({ stayOnPage = false }: { stayOnPage?: boolean }) {
   const camera = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queued, setQueued] = useState(0);
   const router = useRouter();
+  const offline = useOffline();
 
   async function handle(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -34,7 +38,12 @@ export function CaptureForm() {
         });
       }
       void drainOutbox();
-      router.push("/receipts");
+      // Offline, a navigation would wait for signal; stay here and show what's queued instead.
+      if (stayOnPage || offline || !navigator.onLine) {
+        setBusy(false);
+        setNote("");
+        setQueued((n) => n + files.length);
+      } else router.push("/receipts");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't add that photo.");
       setBusy(false);
@@ -44,6 +53,11 @@ export function CaptureForm() {
   return (
     <div className="flex flex-col gap-4">
       {error && <Notice tone="danger" title={error} />}
+      {queued > 0 && (
+        <Notice tone="success" title={`Saved on this phone (${queued}).`}>
+          {offline ? "It sends by itself when you have signal — you can add more." : "Sending now."}
+        </Notice>
+      )}
       <label className="flex flex-col gap-1">
         <span className="label text-[14px] text-ink-2">Note (optional)</span>
         <input
@@ -62,6 +76,7 @@ export function CaptureForm() {
         Choose a screenshot or file
       </Button>
       <p className="text-[14px] text-muted">GCash and Maya screenshots work too. No signal? It waits on this phone and sends itself later.</p>
+      {!stayOnPage && <OutboxList />}
     </div>
   );
 }

@@ -30,17 +30,19 @@ export function SyncIndicator() {
   const offline = useOffline();
   const waiting = useOutboxCount();
   useEffect(() => {
-    if (!offline) void drainOutbox();
+    if (!offline) void drainOutbox({ force: true });
   }, [offline]);
   useEffect(() => {
-    const kick = () => void drainOutbox();
-    const timer = window.setInterval(kick, 30_000);
-    document.addEventListener("visibilitychange", kick);
-    window.addEventListener("online", kick);
+    const tick = () => void drainOutbox();
+    const back = () => void drainOutbox({ force: true });
+    const visible = () => document.visibilityState === "visible" && back();
+    const timer = window.setInterval(tick, 30_000);
+    document.addEventListener("visibilitychange", visible);
+    window.addEventListener("online", back);
     return () => {
       window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", kick);
-      window.removeEventListener("online", kick);
+      document.removeEventListener("visibilitychange", visible);
+      window.removeEventListener("online", back);
     };
   }, []);
 
@@ -53,7 +55,7 @@ export function SyncIndicator() {
   return (
     <button
       type="button"
-      onClick={() => void drainOutbox()}
+      onClick={() => void drainOutbox({ force: true })}
       className={cx("label press inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-cream px-3 text-[13px]", state.cls)}
       aria-live="polite"
       title={waiting > 0 ? "Tap to sync now" : undefined}

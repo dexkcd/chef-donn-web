@@ -6,9 +6,13 @@ import { listOutbox, removeItem, updateItem, type OutboxItem } from "./outbox";
 
 let running: Promise<void> | null = null;
 
-export function drainOutbox(): Promise<void> {
+/**
+ * `force` ignores retry backoff — used when the person taps "Send now" or the browser says
+ * the connection is back. The periodic timer respects backoff.
+ */
+export function drainOutbox(opts: { force?: boolean } = {}): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  running ??= run().finally(() => {
+  running ??= run(opts.force ?? false).finally(() => {
     running = null;
   });
   return running;
@@ -37,9 +41,9 @@ async function send(item: OutboxItem): Promise<Response> {
   }
 }
 
-async function run(): Promise<void> {
+async function run(force: boolean): Promise<void> {
   const now = Date.now();
-  const items = (await listOutbox()).filter((i) => i.status === "pending" && i.nextAttemptAt <= now);
+  const items = (await listOutbox()).filter((i) => i.status === "pending" && (force || i.nextAttemptAt <= now));
   for (const item of items) {
     let res: Response;
     try {

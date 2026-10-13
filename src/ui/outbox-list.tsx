@@ -32,7 +32,7 @@ export function OutboxList() {
   if (items.length === 0) return null;
   return (
     <Card strong>
-      <SectionTitle action={<Button size="sm" variant="secondary" onClick={() => void drainOutbox()}>Send now</Button>}>On this phone ({items.length})</SectionTitle>
+      <SectionTitle action={<Button size="sm" variant="secondary" onClick={() => void drainOutbox({ force: true })}>Send now</Button>}>On this phone ({items.length})</SectionTitle>
       <ul className="divide-y-[1.5px] divide-line">
         {items.map((i) => (
           <li key={i.id} className="flex items-center justify-between gap-3 py-2">
@@ -42,7 +42,7 @@ export function OutboxList() {
             </span>
             {i.status === "failed" ? (
               <span className="flex shrink-0 gap-1">
-                <Button size="sm" variant="secondary" onClick={() => void retryItem(i.id).then(() => drainOutbox())}>
+                <Button size="sm" variant="secondary" onClick={() => void retryItem(i.id).then(() => drainOutbox({ force: true }))}>
                   Retry
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => void removeItem(i.id)}>

@@ -145,6 +145,7 @@ export async function updateProfileAction(_prev: FormState, fd: FormData): Promi
       totalBudgetCents: optPeso(fd, "totalBudget"),
       contingencyBp: pct === null || pct === undefined ? Number.NaN : pct * 100,
       seats: int(fd, "seats"),
+      startingPoint: str(fd, "startingPoint") || undefined,
     },
     updateProfile,
   );
