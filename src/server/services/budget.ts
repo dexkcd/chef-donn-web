@@ -8,7 +8,11 @@ import { Rejection, userIdOf, type ServiceCtx } from "../context";
 import { loadBudgetInputs } from "./budget-data";
 
 // ── input schemas (shared by forms, API and tests) ─────────────────────────────────────────
-const cents = z.number().int().min(0, "Amounts can't be negative.").max(9_000_000_000_000);
+const cents = z
+  .number({ error: "Enter an amount in pesos, like 12,500." })
+  .int()
+  .min(0, "Amounts can't be negative.")
+  .max(9_000_000_000_000, "That amount is too large.");
 const positiveCents = cents.min(1, "Enter an amount above zero.");
 const date = z.string().refine(isLocalDate, "Pick a date.");
 const optionalDate = z.union([date, z.null()]).optional();

@@ -55,7 +55,7 @@ describe("onboarding and the roadmap", () => {
     expect(line!.plannedCents).toBe(412_000_00);
 
     const direct = await runAction(ownerPrincipal, "line.edit", updateLineInput, { lineId: line!.id, plannedCents: 1 }, updateLine);
-    expect(direct).toEqual({ ok: false, reason: "This line follows its roadmap task — change the estimate on the task." });
+    expect(direct).toMatchObject({ ok: false, reason: "This line follows its roadmap task — change the estimate on the task." });
     // Committed amount stays editable on a locked line.
     expectOk(await runAction(ownerPrincipal, "line.edit", updateLineInput, { lineId: line!.id, committedCents: 400_000_00 }, updateLine));
 
@@ -70,7 +70,7 @@ describe("budget rules over the database", () => {
     const { ws, as } = await makeWorkspace();
     const helper = await as("helper");
     const r = await runAction(helper, "line.create", createLineInput, { categoryId: await categoryId(ws.id, "site"), description: "Rent", plannedCents: 1 }, createLine);
-    expect(r).toEqual({ ok: false, reason: "Helpers can't add budget lines. Ask the owner." });
+    expect(r).toMatchObject({ ok: false, status: 403, reason: "Helpers can't add budget lines. Ask the owner." });
   });
 
   it("payments replayed with the same clientId are written once", async () => {

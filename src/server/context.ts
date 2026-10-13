@@ -20,7 +20,7 @@ export interface Principal {
   actor: Actor;
 }
 
-export type ActionResult<T> = { ok: true; data: T } | { ok: false; reason: string; fieldErrors?: Record<string, string> };
+export type ActionResult<T> = { ok: true; data: T } | { ok: false; reason: string; fieldErrors?: Record<string, string>; status?: number };
 
 /** A business-rule refusal. Shown to the person as-is. */
 export class Rejection extends Error {
@@ -109,17 +109,17 @@ export async function runAction<S extends z.ZodType, T>(
   raw: unknown,
   fn: (ctx: ServiceCtx, input: z.output<S>) => Promise<T>,
 ): Promise<ActionResult<T>> {
-  if (!actorCan(principal.actor, action)) return { ok: false, reason: actorDenial(principal.actor, action) };
+  if (!actorCan(principal.actor, action)) return { ok: false, reason: actorDenial(principal.actor, action), status: 403 };
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     const fieldErrors = zodFieldErrors(parsed.error);
-    return { ok: false, reason: Object.values(fieldErrors)[0] ?? "Check the form.", fieldErrors };
+    return { ok: false, reason: Object.values(fieldErrors)[0] ?? "Check the form.", fieldErrors, status: 422 };
   }
   try {
     const data = await db.transaction((tx) => fn(makeCtx(tx, principal), parsed.data));
     return { ok: true, data };
   } catch (e) {
-    if (e instanceof Rejection) return { ok: false, reason: e.message, fieldErrors: e.fieldErrors };
+    if (e instanceof Rejection) return { ok: false, reason: e.message, fieldErrors: e.fieldErrors, status: e.status };
     throw e;
   }
 }

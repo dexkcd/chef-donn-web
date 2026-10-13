@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Chef Donn's design system — Day scheme (owner/office roles), ported from
+ * core/designsystem/Theme.kt in the Android repo. Thick borders over shadows; status is
+ * glyph + colour + label, never colour alone; every number in IBM Plex Mono.
+ */
+@theme {
+  --color-bg: #f4f1ea;
+  --color-surface: #ffffff;
+  --color-sunken: #e8e2d3;
+  --color-line: #d8d3c4;
+  --color-ink: #1a1a1a;
+  --color-ink-2: #3c3c3a;
+  --color-muted: #6b6963;
+  --color-faint: #a19d92;
+  --color-wash: #efebe0;
+  --color-cream: #f4f1ea;
+
+  --color-green: #0f4d3a;
+  --color-green-deep: #0a3427;
+  --color-green-bright: #1e8f5e;
+  --color-red: #c8102e;
+  --color-red-deep: #8f0b21;
+  --color-gold: #d9a441;
+  --color-gold-deep: #b3822b;
+  --color-gold-wash: #f6e7c4;
+  --color-orange: #e0762d;
+
+  --font-display: var(--font-archivo), "Arial Black", sans-serif;
+  --font-body: var(--font-barlow), system-ui, sans-serif;
+  --font-label: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --border-width-thin: 1.5px;
+  --border-width-thick: 3px;
+  --border-width-heavy: 5px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: var(--color-bg);
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .label {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  .press {
+    transition: transform 80ms ease-out;
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
 }
