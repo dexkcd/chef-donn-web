@@ -31,6 +31,7 @@ export async function extractReceipt(id: string): Promise<"needs_review" | "extr
   const [doc] = await db.select().from(document).where(eq(document.id, row.documentId));
   if (!doc) throw new Error(`receipt ${id} has no document`);
   const extractor = receiptExtractor();
+  const started = Date.now();
   try {
     const [cats, lines] = await Promise.all([
       db
@@ -83,6 +84,11 @@ export async function extractReceipt(id: string): Promise<"needs_review" | "extr
         lastError: null,
       })
       .where(eq(receipt.id, row.id));
+    // Successes are logged too, so the logs show the latest outcome — not just old failures.
+    // No receipt contents beyond the total's confidence.
+    console.info(
+      `[receipts] read ${row.id} in ${((Date.now() - started) / 1000).toFixed(1)}s · ${extraction.model ?? extractor.name} · total ${extraction.total.value ? "found" : "missing"} (${extraction.total.confidence}) · suggestion ${suggestion.source}`,
+    );
     return "needs_review";
   } catch (e) {
     const final = row.attempts >= MAX_ATTEMPTS;
