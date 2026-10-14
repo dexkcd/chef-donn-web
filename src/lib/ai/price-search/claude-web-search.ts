@@ -16,7 +16,7 @@ import type { FoundPrice, PriceSearchContext, PriceSearchProvider, PriceSearchRe
 
 const MAX_PAUSE_RESUMES = 3;
 
-const structuredSchema = z.object({
+export const structuredSchema = z.object({
   observations: z.array(
     z.object({
       item: z.string(),
