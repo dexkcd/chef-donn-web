@@ -9,6 +9,8 @@ export const env = {
   /** No Resend yet: print sign-in links to the server logs (deploy-time stopgap, opt-in). */
   signinLinksToLogs: process.env.SIGNIN_LINKS_TO_LOGS === "1",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
+  /** Only for API keys not created inside a workspace: sent as the anthropic-workspace-id header. */
+  anthropicWorkspaceId: process.env.ANTHROPIC_WORKSPACE_ID?.trim() || null,
   receiptModel: process.env.RECEIPT_MODEL ?? "claude-opus-5-5",
   priceModel: process.env.PRICE_MODEL ?? "claude-opus-5-5",
   /** "anthropic" | "fake" | "null" — tests and e2e force "fake". */

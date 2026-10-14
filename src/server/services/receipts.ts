@@ -240,6 +240,20 @@ export async function rejectReceipt(ctx: ServiceCtx, input: z.output<typeof reje
   await ctx.audit({ action: "receipt.reject", subjectType: "receipt", subjectId: r.id, after: { reason: input.reason } });
 }
 
+export const retryExtractionInput = z.object({ receiptId: z.uuid() });
+
+/**
+ * Ask the AI to read a receipt again after it gave up (e.g. the API key was misconfigured).
+ * Re-uploading the photo can't do this — the same file is blocked as a duplicate.
+ */
+export async function retryExtraction(ctx: ServiceCtx, input: z.output<typeof retryExtractionInput>) {
+  const { r } = await loadForUpdate(ctx, input.receiptId);
+  if (r.status !== "extraction_failed") throw new Rejection("This receipt isn't waiting to be read — open it to check or confirm it.");
+  await ctx.tx.update(receipt).set({ status: "uploaded", attempts: 0, lastError: null, claimedAt: null }).where(eq(receipt.id, r.id));
+  await ctx.audit({ action: "receipt.retry_extraction", subjectType: "receipt", subjectId: r.id, before: { lastError: r.lastError } });
+  return { receiptId: r.id };
+}
+
 // ── reads ─────────────────────────────────────────────────────────────────────────────────
 export async function listReceipts(exec: Executor, workspaceId: string) {
   return exec

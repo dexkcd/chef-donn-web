@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db } from "@/db/client";
-import { budgetCategory, moneyLine, payment, receipt, vendorRule } from "@/db/schema";
+import { auditEvent, budgetCategory, moneyLine, payment, receipt, vendorRule } from "@/db/schema";
 import { runAction, type Principal } from "@/server/context";
 import { extractReceipt } from "@/server/jobs/extraction";
 import { budgetOverview } from "@/server/services/budget-data";
 import { createLine, createLineInput } from "@/server/services/budget";
-import { captureInput, captureReceipt, confirmInput, confirmReceipt } from "@/server/services/receipts";
+import { captureInput, captureReceipt, confirmInput, confirmReceipt, retryExtraction, retryExtractionInput } from "@/server/services/receipts";
 import { expectOk, makeWorkspace } from "./helpers";
 
 const jpeg = (seed: string) => new Uint8Array(Buffer.from(`\xff\xd8\xff fake jpeg ${seed}`));
@@ -133,5 +133,26 @@ describe("receipts", () => {
       return;
     }
     throw new Error("fake extractor never repeated the vendor");
+  });
+
+  it("a receipt the AI gave up on can be read again (not by a bookkeeper), and only then", async () => {
+    const { as, ownerPrincipal } = await setup();
+    const { receipt: r } = await capture(ownerPrincipal, jpeg("retry"));
+    // As if the API had refused three times (e.g. a key that needs a workspace header).
+    await db.update(receipt).set({ status: "extraction_failed", attempts: 3, lastError: "400 workspace header missing" }).where(eq(receipt.id, r.id));
+
+    const bookkeeper = await as("bookkeeper");
+    expect(await runAction(bookkeeper, "receipt.capture", retryExtractionInput, { receiptId: r.id }, retryExtraction)).toMatchObject({ ok: false, status: 403 });
+
+    const helper = await as("helper");
+    expectOk(await runAction(helper, "receipt.capture", retryExtractionInput, { receiptId: r.id }, retryExtraction));
+    const [reset] = await db.select().from(receipt).where(eq(receipt.id, r.id));
+    expect(reset).toMatchObject({ status: "uploaded", attempts: 0, lastError: null });
+    const audits = await db.select().from(auditEvent).where(and(eq(auditEvent.subjectId, r.id), eq(auditEvent.action, "receipt.retry_extraction")));
+    expect(audits).toHaveLength(1);
+
+    expect(await extractReceipt(r.id)).toBe("needs_review");
+    const again = await runAction(ownerPrincipal, "receipt.capture", retryExtractionInput, { receiptId: r.id }, retryExtraction);
+    expect(again).toMatchObject({ ok: false, reason: expect.stringContaining("isn't waiting to be read") });
   });
 });

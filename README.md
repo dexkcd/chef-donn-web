@@ -65,6 +65,7 @@ templates). Health check: `/login`.
 | `BOOTSTRAP_OWNER_EMAIL` | The first owner's email |
 | `STORAGE_DRIVER` + `S3_*` | `s3` + references to the bucket (`${{receipts.ENDPOINT}}`, …) |
 | `ANTHROPIC_API_KEY` | **Add your key here** to turn on receipt reading and price search |
+| `ANTHROPIC_WORKSPACE_ID` | Only for a key not created inside a workspace: its `wrkspc_…` id (otherwise every AI call fails with 400) |
 | `RESEND_API_KEY`, `MAIL_FROM` | Sign-in emails (needs a verified sending domain) |
 | `SIGNIN_LINKS_TO_LOGS` | `1` until Resend is set up: sign-in links appear in the `web` deploy logs as `[sign-in] link for …` |
 

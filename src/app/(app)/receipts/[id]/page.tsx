@@ -8,7 +8,7 @@ import { PAYMENT_METHOD_LABELS } from "@/domain/budget";
 import { formatDate } from "@/domain/dates";
 import { can } from "@/domain/permissions";
 import { emptyDraft } from "@/lib/receipts/draft";
-import { rejectReceiptAction } from "@/server/actions/receipts";
+import { rejectReceiptAction, retryExtractionAction } from "@/server/actions/receipts";
 import { loadCategories } from "@/server/services/budget-data";
 import { getReceipt, openLines } from "@/server/services/receipts";
 import { requireMember } from "@/server/viewer";
@@ -97,7 +97,21 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Check this receipt" back={{ href: "/receipts", label: "Receipts" }} subtitle={<StatusBadge tone={r.status === "extraction_failed" ? "failed" : "review"} />} />
-      {r.status === "extraction_failed" && <Notice tone="warning" title="The AI couldn't read this one — fill it in from the photo.">{r.lastError}</Notice>}
+      {r.status === "extraction_failed" && (
+        <>
+          <Notice tone="warning" title="The AI couldn't read this one — fill it in from the photo, or try again.">
+            {r.lastError}
+          </Notice>
+          {can(role, "receipt.capture") && (
+            <ActionForm action={retryExtractionAction}>
+              <input type="hidden" name="receiptId" value={r.id} />
+              <Submit variant="secondary" pendingLabel="Starting…">
+                Read it again
+              </Submit>
+            </ActionForm>
+          )}
+        </>
+      )}
       {media}
       <ReviewForm
         receiptId={r.id}

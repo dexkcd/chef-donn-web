@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import type { FormState } from "@/ui/form";
-import { confirmInput, confirmReceipt, rejectInput, rejectReceipt } from "../services/receipts";
+import { extractReceipt } from "../jobs/extraction";
+import { confirmInput, confirmReceipt, rejectInput, rejectReceipt, retryExtraction, retryExtractionInput } from "../services/receipts";
 import { act } from "../viewer";
 import { optPeso, optStr, peso, str, toFormState } from "./form";
 
@@ -40,4 +42,10 @@ export async function rejectReceiptAction(_prev: FormState, fd: FormData): Promi
   if (!r.ok) return toFormState(r);
   toFormState(r);
   redirect("/receipts");
+}
+
+export async function retryExtractionAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const r = await act("receipt.capture", retryExtractionInput, { receiptId: str(fd, "receiptId") }, retryExtraction);
+  if (r.ok) after(() => extractReceipt(r.data.receiptId).catch((e) => console.error("[receipts] extraction failed", e)));
+  return toFormState(r, "Reading it again — this takes a few seconds.");
 }
