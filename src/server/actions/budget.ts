@@ -22,6 +22,7 @@ import {
   voidPaymentInput,
 } from "../services/budget";
 import { z } from "zod";
+import { categoryPlansInput, setCategoryPlans } from "../services/plans";
 import { act } from "../viewer";
 import { int, optPeso, optStr, peso, str, toFormState } from "./form";
 
@@ -150,4 +151,20 @@ export async function updateProfileAction(_prev: FormState, fd: FormData): Promi
     updateProfile,
   );
   return toFormState(r, "Profile saved.", { contingencyBp: "contingencyPct" });
+}
+
+/** Category page: one amount box per line (named planned.<lineId>), saved together. */
+export async function saveCategoryPlansAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const plans: { lineId: string; plannedCents: number }[] = [];
+  const rename: Record<string, string> = {};
+  for (const key of fd.keys()) {
+    if (!key.startsWith("planned.")) continue;
+    const cents = peso(fd, key);
+    if (cents === undefined) continue; // left blank: unchanged
+    rename[`plans.${plans.length}.plannedCents`] = key;
+    plans.push({ lineId: key.slice("planned.".length), plannedCents: cents });
+  }
+  const r = await act("line.edit", categoryPlansInput, { categoryId: str(fd, "categoryId"), plans }, setCategoryPlans);
+  const n = r.ok ? r.data.changed : 0;
+  return toFormState(r, n === 0 ? "Nothing changed." : `Saved — ${n} ${n === 1 ? "line" : "lines"} updated.`, rename);
 }

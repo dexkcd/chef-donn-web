@@ -88,6 +88,15 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await expect(plannedCard).toContainText("₱4,000,000");
   expect(await totalCard.innerText()).not.toEqual(breakdownBefore);
 
+  // Adjust amounts right on the category page: one Save for every line in it.
+  await page.goto("/budget");
+  await page.getByRole("link", { name: /^Equipment/ }).first().click();
+  const amount = page.locator('input[name^="planned."]').first();
+  await amount.fill("712,345");
+  await page.getByRole("button", { name: "Save Equipment" }).click();
+  await expect(page.getByText("Saved — 1 line updated.")).toBeVisible();
+  await expect(amount).toHaveValue("712,345");
+
   // Receipt: capture → AI (fake) reads it → confirm → it's a payment.
   await page.goto("/receipts/capture");
   await page.getByTestId("gallery-input").setInputFiles({ name: "or.jpg", mimeType: "image/jpeg", buffer: await receiptPhoto(page, "first") });
@@ -188,6 +197,9 @@ test("screenshots", async ({ page }) => {
   await shot("overview");
   await page.goto("/budget");
   await shot("budget");
+  await page.getByRole("link", { name: /^Equipment/ }).first().click();
+  await expect(page.getByRole("button", { name: "Save Equipment" })).toBeVisible();
+  await shot("category");
   await page.goto("/roadmap");
   await shot("roadmap");
   await page.getByRole("link", { name: /^Buy kitchen and refrigeration equipment/ }).click();
