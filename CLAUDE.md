@@ -29,7 +29,9 @@ specs say El Nido — the pilot moved; don't reintroduce El Nido facts).
   Rejections carry a human reason (and HTTP status for the API) — never fail silently.
 - **AI never writes a payment or an estimate.** Receipt fields stay unconfirmed until a person
   confirms payee, date, total, method and line. Price-search results are applied only by a
-  person; API keys can trigger and read searches, never apply them.
+  person; API keys can trigger and read searches, never apply them. AI budget drafts
+  (`plan_draft`, `src/server/services/ai-plan.ts`) are proposals: a person ticks and applies
+  them (basis / source `ai_plan`, badge "AI estimate"); the planner can't add roadmap tasks.
 - **Locked lines follow their source** (roadmap task, contingency rule). Edit the task.
 - **Local rules are data** with verified-by/date/source; seeds ship `unverified` with
   placeholder costs labelled as such. The AI never generates requirements.
@@ -48,10 +50,12 @@ every number. Fonts are local files in `src/fonts`.
 
 ## AI
 
-`claude-opus-5-5` by default (`RECEIPT_MODEL`, `PRICE_MODEL`), effort medium, server-side refusal
+`claude-opus-5-5` by default (`RECEIPT_MODEL`, `PRICE_MODEL`, `PLAN_MODEL`), effort medium, server-side refusal
 fallbacks (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). Check
-`stop_reason` (`refusal`, `max_tokens`, `pause_turn`). Tests use `AI_EXTRACTOR=fake` /
-`PRICE_PROVIDER=fake`; without `ANTHROPIC_API_KEY` both are off and say so.
+`stop_reason` (`refusal`, `max_tokens`, `pause_turn`). Structured-output schemas have no
+nullable fields (API limit: 16 union params; `countUnionParams` tests guard it). Tests use
+`AI_EXTRACTOR=fake` / `PRICE_PROVIDER=fake` / `AI_PLANNER=fake`; without `ANTHROPIC_API_KEY`
+all three are off and say so.
 
 ## Out of scope
 

@@ -8,7 +8,7 @@ import { workspace } from "./core";
 export const stageEnum = pgEnum("stage", STAGES);
 export const taskStatusEnum = pgEnum("task_status", ["todo", "in_progress", "done", "skipped"]);
 export const verificationEnum = pgEnum("verification_status", ["unverified", "verified"]);
-export const estimateBasisEnum = pgEnum("estimate_basis", ["owner", "template_mid", "price_search"]);
+export const estimateBasisEnum = pgEnum("estimate_basis", ["owner", "template_mid", "price_search", "ai_plan"]);
 
 /**
  * Templates are shared knowledge, not per workspace. Every local rule carries who verified

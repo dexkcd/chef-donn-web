@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { manilaToday } from "@/domain/dates";
 import { can } from "@/domain/permissions";
+import { planDraftingOn } from "@/lib/ai/plan";
 import { budgetOverview } from "@/server/services/budget-data";
 import { requireMember } from "@/server/viewer";
 import { ExportLinks } from "@/ui/download-link";
@@ -37,6 +38,11 @@ export default async function BudgetPage() {
           ]}
         />
       </Card>
+      {can(role, "plan.draft") && planDraftingOn() && (
+        <ButtonLink href="/plan/new" variant="secondary">
+          Redo the AI setup
+        </ButtonLink>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <ButtonLink href="/payments/upcoming" variant="secondary" size="sm">
           Upcoming payments

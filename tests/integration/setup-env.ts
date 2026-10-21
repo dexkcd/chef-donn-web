@@ -14,5 +14,6 @@ process.env.STORAGE_DRIVER = "fs";
 process.env.STORAGE_DIR = `.data/test-uploads/${name}`;
 process.env.AI_EXTRACTOR = "fake";
 process.env.PRICE_PROVIDER = "fake";
+process.env.AI_PLANNER = "fake";
 process.env.DISABLE_SWEEPER = "1";
 process.env.ALLOW_INSECURE_CALLBACKS = "1";

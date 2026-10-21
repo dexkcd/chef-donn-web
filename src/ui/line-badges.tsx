@@ -2,7 +2,7 @@ import type { LineRollup } from "@/domain/budget";
 import { StatusBadge } from "./kit";
 
 /** The badges a budget line wears: where its money is, and whether it's an estimate. */
-export function LineStatusBadges({ line, estimate }: { line: LineRollup; estimate?: boolean }) {
+export function LineStatusBadges({ line, estimate, aiEstimate }: { line: LineRollup; estimate?: boolean; aiEstimate?: boolean }) {
   const l = line;
   return (
     <>
@@ -17,6 +17,7 @@ export function LineStatusBadges({ line, estimate }: { line: LineRollup; estimat
       )}
       {l.overBy > 0 && <StatusBadge tone="over" />}
       {l.line.sourceType === "task" && <StatusBadge tone={estimate ? "estimate" : "planned"} label={estimate ? "Estimate — set yours" : "From roadmap"} />}
+      {(l.line.sourceType === "ai_plan" || (l.line.sourceType === "task" && aiEstimate)) && <StatusBadge tone="ai_estimate" label="AI estimate" />}
       {l.line.sourceType === "receipt_unplanned" && <StatusBadge tone="over" label="Unplanned" />}
       {l.line.sourceType === "contingency_rule" && <StatusBadge tone="planned" label="Automatic" />}
     </>

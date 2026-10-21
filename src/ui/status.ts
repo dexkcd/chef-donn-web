@@ -20,6 +20,7 @@ export type StatusTone =
   | "unverified"
   | "verified"
   | "estimate"
+  | "ai_estimate"
   | "found_online"
   | "over"
   | "ok";
@@ -42,6 +43,7 @@ export const STATUS: Record<StatusTone, { glyph: string; label: string; classNam
   unverified: { glyph: "●", label: "Unverified", className: "bg-gold-wash text-ink border-gold" },
   verified: { glyph: "✓", label: "Verified", className: "bg-green text-white border-green-deep" },
   estimate: { glyph: "▲", label: "Estimate — set yours", className: "bg-gold-wash text-ink border-gold" },
+  ai_estimate: { glyph: "●", label: "AI estimate — unverified", className: "bg-gold-wash text-ink border-gold" },
   found_online: { glyph: "●", label: "Found online — confirm", className: "bg-gold-wash text-ink border-gold" },
   over: { glyph: "▲", label: "Over plan", className: "bg-red text-white border-red-deep" },
   ok: { glyph: "✓", label: "On plan", className: "bg-green-bright text-white border-green" },

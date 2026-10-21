@@ -6,6 +6,7 @@ import { receipt } from "@/db/schema";
 import { formatDate, manilaToday } from "@/domain/dates";
 import { formatBp, formatPeso } from "@/domain/money";
 import { can } from "@/domain/permissions";
+import { planDraftingOn } from "@/lib/ai/plan";
 import { nextUp } from "@/domain/roadmap";
 import { budgetOverview } from "@/server/services/budget-data";
 import { loadRoadmap } from "@/server/services/roadmap";
@@ -36,6 +37,7 @@ export default async function OverviewPage() {
   const canWrite = v.principal.actor.role !== "bookkeeper";
   const canEditProfile = can(v.principal.actor.role, "profile.edit");
   const plan = o.plan;
+  const canAiPlan = can(v.principal.actor.role, "plan.draft") && planDraftingOn();
 
   return (
     <div className="flex flex-col gap-5">
@@ -134,6 +136,11 @@ export default async function OverviewPage() {
           </Link>
         ) : (
           <span className="text-muted">No total budget set yet.</span>
+        )}
+        {canAiPlan && (
+          <Link href="/plan/new" className="label mt-1 flex min-h-[56px] items-center text-[14px] text-green underline">
+            Redo the AI setup — Claude redrafts every line →
+          </Link>
         )}
       </Card>
       {plan.total !== null && plan.over > 0 && (

@@ -11,6 +11,7 @@ export const sourceTypeEnum = pgEnum("source_type", [
   "task",
   "receipt_unplanned",
   "contingency_rule",
+  "ai_plan",
   "contract",
   "permit",
   "equipment",

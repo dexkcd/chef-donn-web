@@ -167,7 +167,8 @@ export async function recordClientResult(ctx: ServiceCtx, clientId: string | und
 }
 
 // ── lines ─────────────────────────────────────────────────────────────────────────────────
-export async function createLine(ctx: ServiceCtx, input: z.output<typeof createLineInput>) {
+/** `opts.sourceType` is internal: "ai_plan" when a person applies a line from an AI-drafted plan. */
+export async function createLine(ctx: ServiceCtx, input: z.output<typeof createLineInput>, opts: { sourceType?: "ai_plan" } = {}) {
   const cat = await getCategory(ctx, input.categoryId);
   if (cat.kind === "contingency") throw new Rejection("Contingency is set as a percentage in the profile, not as lines.");
   const [line] = await ctx.tx
@@ -181,7 +182,7 @@ export async function createLine(ctx: ServiceCtx, input: z.output<typeof createL
       committedCents: input.committedCents,
       dueDate: input.dueDate ?? null,
       payeeName: input.payeeName ?? null,
-      sourceType: "manual",
+      sourceType: opts.sourceType ?? "manual",
       createdBy: userIdOf(ctx.actor),
     })
     .returning();

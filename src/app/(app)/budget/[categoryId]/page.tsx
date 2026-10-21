@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
+import { task } from "@/db/schema";
 import { manilaToday } from "@/domain/dates";
 import { formatPeso } from "@/domain/money";
 import { can } from "@/domain/permissions";
@@ -22,6 +24,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const c = o.rollup.categories.find((x) => x.category.id === categoryId);
   if (!c) notFound();
   const cat = o.inputs.cats.find((x) => x.id === categoryId)!;
+  // How each roadmap line's amount was set, for its badge.
+  const basis = new Map((await db.select({ id: task.id, basis: task.estimateBasis }).from(task).where(eq(task.workspaceId, v.principal.workspaceId))).map((t) => [t.id, t.basis]));
+  const badgeFlags = (lineId: string) => {
+    const src = c.lines.find((x) => x.line.id === lineId);
+    const b = src && o.inputs.lines.find((x) => x.id === lineId)?.sourceId;
+    const tb = b ? basis.get(b) : undefined;
+    return { estimate: tb === "template_mid", aiEstimate: tb === "ai_plan" };
+  };
   const canPlanLines = can(v.principal.actor.role, "line.edit") && c.category.kind !== "contingency";
   // Editing: a stable order, so rows don't jump after a save. Reading: biggest first.
   const lines = canPlanLines ? [...c.lines].sort((a, b) => a.line.description.localeCompare(b.line.description)) : [...c.lines].sort((a, b) => b.forecast - a.forecast);
@@ -65,7 +75,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
                   {l.line.description}
                 </Link>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <LineStatusBadges line={l} />
+                  <LineStatusBadges line={l} {...badgeFlags(l.line.id)} />
                 </div>
                 <div className="num mt-1 text-[13px] text-muted">
                   committed {formatShort(l.committed)} · paid {formatShort(l.paid)}
@@ -99,7 +109,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
                   <Money cents={l.forecast} noCentavos className="font-semibold" />
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <LineStatusBadges line={l} />
+                  <LineStatusBadges line={l} {...badgeFlags(l.line.id)} />
                 </div>
                 <div className="num mt-1 text-[13px] text-muted">
                   plan {formatShort(l.planned)} · committed {formatShort(l.committed)} · paid {formatShort(l.paid)}

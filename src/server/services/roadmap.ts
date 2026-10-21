@@ -164,7 +164,8 @@ export async function setTaskStatus(ctx: ServiceCtx, input: z.output<typeof task
   return after!;
 }
 
-export async function setTaskEstimate(ctx: ServiceCtx, input: z.output<typeof taskEstimateInput>) {
+/** `opts.basis` is internal: an AI-drafted plan a person applied (see services/ai-plan). */
+export async function setTaskEstimate(ctx: ServiceCtx, input: z.output<typeof taskEstimateInput>, opts: { basis?: "ai_plan" } = {}) {
   const t = await getTask(ctx, input.taskId);
   const categoryKey = input.categoryKey ?? t.categoryKey;
   if (input.estimateCents > 0 && !categoryKey) throw new Rejection("Pick which budget category this cost belongs to.", { categoryKey: "Pick a category." });
@@ -172,7 +173,7 @@ export async function setTaskEstimate(ctx: ServiceCtx, input: z.output<typeof ta
     .update(task)
     .set({
       estimateCents: input.estimateCents,
-      estimateBasis: input.priceSearchId ? "price_search" : "owner",
+      estimateBasis: opts.basis ?? (input.priceSearchId ? "price_search" : "owner"),
       estimatePriceSearchId: input.priceSearchId ?? null,
       categoryKey: categoryKey ?? null,
     })

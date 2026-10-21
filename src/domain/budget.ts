@@ -32,6 +32,8 @@ export type SourceType =
   | "task"
   | "receipt_unplanned"
   | "contingency_rule"
+  // A person applied it from an AI-drafted plan (the amount is an AI estimate until edited).
+  | "ai_plan"
   // Later modules plug in here without schema changes:
   | "contract"
   | "permit"

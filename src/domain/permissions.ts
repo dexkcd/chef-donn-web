@@ -35,6 +35,8 @@ export const ACTIONS = [
   "prices.search",
   "prices.apply",
   "api_keys.manage",
+  "plan.draft",
+  "plan.apply",
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -80,4 +82,6 @@ const ACTION_PHRASES: Record<Action, string> = {
   "prices.search": "run price searches",
   "prices.apply": "apply prices to estimates",
   "api_keys.manage": "manage API keys",
+  "plan.draft": "ask the AI to draft the budget",
+  "plan.apply": "apply an AI-drafted budget",
 };

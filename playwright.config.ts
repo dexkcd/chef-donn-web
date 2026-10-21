@@ -34,6 +34,7 @@ export default defineConfig({
       ENABLE_DEV_MAILBOX: "1",
       AI_EXTRACTOR: "fake",
       PRICE_PROVIDER: "fake",
+      AI_PLANNER: "fake",
       STORAGE_DRIVER: "fs",
       STORAGE_DIR: ".data/e2e-uploads",
     },

@@ -13,6 +13,10 @@ export const env = {
   anthropicWorkspaceId: process.env.ANTHROPIC_WORKSPACE_ID?.trim() || null,
   receiptModel: process.env.RECEIPT_MODEL ?? "claude-opus-5-5",
   priceModel: process.env.PRICE_MODEL ?? "claude-opus-5-5",
+  planModel: process.env.PLAN_MODEL ?? "claude-opus-5-5",
+  /** "anthropic" | "fake" | "null" — tests and e2e force "fake". */
+  aiPlanner: process.env.AI_PLANNER ?? null,
+  planDraftDailyLimit: Number(process.env.PLAN_DRAFT_DAILY_LIMIT ?? 10),
   /** "anthropic" | "fake" | "null" — tests and e2e force "fake". */
   aiExtractor: process.env.AI_EXTRACTOR ?? null,
   priceProvider: process.env.PRICE_PROVIDER ?? null,

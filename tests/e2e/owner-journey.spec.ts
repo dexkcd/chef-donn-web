@@ -33,7 +33,23 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await page.getByText("Building", { exact: true }).click();
   await page.getByLabel("Target opening date").fill("2027-03-01");
   await page.getByLabel("Total you can spend to open").fill("3,500,000");
-  await page.getByRole("button", { name: "Build my roadmap" }).click();
+  // The planning questions: Claude (fake in tests) drafts every line from them.
+  await page.getByLabel("Seats").fill("40");
+  await page.getByLabel("Rent per month").fill("25k");
+  await page.getByLabel("Deposit (months)").fill("2");
+  await page.getByLabel("Advance (months)").fill("1");
+  await page.getByText("Generator", { exact: true }).click();
+  await page.getByRole("button", { name: "Build my roadmap and draft the budget" }).click();
+
+  // Review the AI draft: nothing changes until it's applied.
+  await expect(page).toHaveURL(/\/plan\//);
+  const apply = page.getByRole("button", { name: /^Apply \d+ changes$/ });
+  await expect(apply).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Water tank & pump")).toBeVisible();
+  await expect(page.getByText("Already owned.")).toBeVisible();
+  await apply.click();
+  await expect(page.getByText(/^Applied \d+ changes/)).toBeVisible();
+  await page.goto("/");
 
   // Overview answers the two questions.
   await expect(page.getByText("Cash on hand", { exact: true })).toBeVisible();
@@ -96,6 +112,22 @@ test("owner: sign in → onboard → roadmap → price lookup → receipt → da
   await page.getByRole("button", { name: "Save Equipment" }).click();
   await expect(page.getByText("Saved — 1 line updated.")).toBeVisible();
   await expect(amount).toHaveValue("712,345");
+  // Lines the AI added keep their badge until someone changes them.
+  await page.goto("/budget");
+  await page.getByRole("link", { name: /^Utilities setup/ }).first().click();
+  await expect(page.locator("li").filter({ hasText: "Water tank & pump" })).toContainText("AI estimate");
+
+  // Redo the AI setup: the last answers come back; a changed rent shows up as a change to approve.
+  await page.goto("/plan/new");
+  await expect(page.getByLabel("Seats")).toHaveValue("40");
+  await page.getByLabel("Rent per month").fill("30k");
+  await page.getByRole("button", { name: "Draft with Claude" }).click();
+  await expect(page.getByRole("button", { name: /^Apply \d+ changes?$/ })).toBeVisible({ timeout: 30_000 });
+  const lease = page.locator("label").filter({ hasText: "Sign and notarise the lease" });
+  await expect(lease).toContainText("₱75,000");
+  await expect(lease).toContainText("₱90,000");
+  await page.getByRole("button", { name: /^Apply \d+ changes?$/ }).click();
+  await expect(page.getByText(/^Applied \d+ changes?/)).toBeVisible();
 
   // Receipt: capture → AI (fake) reads it → confirm → it's a payment.
   await page.goto("/receipts/capture");
@@ -204,6 +236,14 @@ test("screenshots", async ({ page }) => {
   await shot("roadmap");
   await page.getByRole("link", { name: /^Buy kitchen and refrigeration equipment/ }).click();
   await shot("task-with-prices");
+
+  await page.goto("/plan/new");
+  await shot("plan-questions");
+  await page.getByLabel("Rent per month").fill("28k");
+  await page.getByText("Water tank & pump", { exact: true }).click();
+  await page.getByRole("button", { name: "Draft with Claude" }).click();
+  await expect(page.getByRole("button", { name: /^Apply \d+ changes?$/ })).toBeVisible({ timeout: 30_000 });
+  await shot("plan-review");
 
   await page.goto("/receipts/capture");
   await page.getByTestId("gallery-input").setInputFiles({ name: "or.jpg", mimeType: "image/jpeg", buffer: await receiptPhoto(page, "screenshot") });

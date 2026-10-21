@@ -58,7 +58,7 @@ export default async function LinePage({ params }: { params: Promise<{ lineId: s
         back={{ href: `/budget/${line.categoryId}`, label: cat?.name ?? "Budget" }}
         subtitle={
           <span className="flex flex-wrap gap-1.5">
-            <LineStatusBadges line={r} estimate={sourceTask?.estimateBasis === "template_mid"} />
+            <LineStatusBadges line={r} estimate={sourceTask?.estimateBasis === "template_mid"} aiEstimate={sourceTask?.estimateBasis === "ai_plan"} />
             {line.closedAt && <StatusBadge tone="done" label="Closed" />}
           </span>
         }

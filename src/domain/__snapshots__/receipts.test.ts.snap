@@ -36,6 +36,8 @@ exports[`can() > matches the spec's role matrix 1`] = `
     "prices.search",
     "prices.apply",
     "api_keys.manage",
+    "plan.draft",
+    "plan.apply",
   ],
   "partner": [
     "view.workspace",
@@ -60,6 +62,8 @@ exports[`can() > matches the spec's role matrix 1`] = `
     "prices.search",
     "prices.apply",
     "api_keys.manage",
+    "plan.draft",
+    "plan.apply",
   ],
 }
 `;

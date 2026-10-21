@@ -29,7 +29,7 @@ export default async function RoadmapPage() {
             <span className="label text-[12px]">{full.area}</span>
             {full.estimateCents !== null && full.estimateCents > 0 && t.state.kind !== "skipped" && (
               <span className="num">
-                {full.estimateBasis === "template_mid" ? "≈ " : ""}
+                {full.estimateBasis === "template_mid" || full.estimateBasis === "ai_plan" ? "≈ " : ""}
                 {formatPeso(full.estimateCents, { noCentavos: true })}
               </span>
             )}

@@ -117,6 +117,8 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                   <StatusBadge tone="estimate" />
                 ) : t.estimateBasis === "price_search" ? (
                   <StatusBadge tone="found_online" label="Prices found online" />
+                ) : t.estimateBasis === "ai_plan" ? (
+                  <StatusBadge tone="ai_estimate" />
                 ) : t.estimateBasis === "owner" ? (
                   "Your number"
                 ) : (

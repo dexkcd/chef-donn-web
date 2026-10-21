@@ -9,6 +9,9 @@ opening in **Port Barton, San Vicente, Palawan**.
 - **Opening budget, three states of money.** Planned → committed → paid, by category.
   Overspend is drawn from contingency, visibly. Cash on hand, runway to opening, what's due in
   the next 14 days.
+- **AI budget setup.** Answer a few questions (seats, the space, rent, what you already have)
+  and Claude drafts every budget line; you tick what to apply. Re-run it any time — it shows
+  the differences from the current budget.
 - **Roadmap.** Plan → Build → Get ready, with the San Vicente / Port Barton permit chain.
   Task estimates drive budget lines. Every local rule and cost is marked *Unverified* until
   someone files it.

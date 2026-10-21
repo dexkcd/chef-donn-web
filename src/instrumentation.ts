@@ -1,5 +1,5 @@
 /**
- * Background sweeper: every 60s, pick up receipts and price searches that are waiting or got
+ * Background sweeper: every 60s, pick up receipts, price searches and AI plan drafts that are waiting or got
  * stuck (e.g. the server restarted mid-job). Requests also kick their own job via after(),
  * so this is the safety net, not the main path.
  */
@@ -8,6 +8,7 @@ export async function register() {
   if (process.env.DISABLE_SWEEPER === "1") return;
   const { sweepReceipts } = await import("./server/jobs/extraction");
   const { sweepPriceSearches } = await import("./server/jobs/price-search");
+  const { sweepPlanDrafts } = await import("./server/jobs/plan-draft");
   let running = false;
   const tick = async () => {
     if (running) return;
@@ -15,6 +16,7 @@ export async function register() {
     try {
       await sweepReceipts();
       await sweepPriceSearches();
+      await sweepPlanDrafts();
     } catch (e) {
       console.error("[sweeper]", e);
     } finally {
